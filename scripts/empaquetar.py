@@ -210,5 +210,27 @@ def main() -> None:
                     "zip": str(destino), "zip_MB": round(destino.stat().st_size / 2**20)}, ensure_ascii=False))
 
 
+def _reportar_error(msg: str) -> None:
+    """En GitHub Actions, el error también se publica como anotación (visible sin abrir el log)."""
+    import os
+    texto = " ".join(str(msg).split())[:900]
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::error title=Empaquetado::{texto}", flush=True)
+    print(f"[empaquetar] ERROR: {texto}", file=sys.stderr, flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as exc:
+        detalle = (exc.stderr or exc.stdout or b"")
+        detalle = detalle.decode("utf-8", "replace") if isinstance(detalle, bytes) else detalle
+        _reportar_error(f"Falló {' '.join(map(str, exc.cmd))[:200]} (código {exc.returncode}): {detalle[-600:]}")
+        sys.exit(1)
+    except SystemExit as exc:
+        if exc.code not in (0, None):
+            _reportar_error(exc.code)
+        raise
+    except Exception as exc:  # noqa: BLE001
+        _reportar_error(f"{type(exc).__name__}: {exc}")
+        raise
