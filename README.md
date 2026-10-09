@@ -90,10 +90,10 @@ Tiene que mostrar `Python 3.12.x` (o 3.11 o superior).
 
 ### 2.2 Preparar la carpeta del proyecto
 
-Guardá la carpeta del proyecto donde quieras, por ejemplo `C:\Users\<vos>\Desktop\IA Day`. Después, en PowerShell:
+Guardá la carpeta del proyecto donde quieras, por ejemplo `C:\Users\<vos>\Documents\CoraNotes`. Después, en PowerShell:
 
 ```powershell
-cd "C:\Users\<vos>\Desktop\IA Day"
+cd "C:\Users\<vos>\Documents\CoraNotes"
 ```
 
 La primera vez que inicies la app, el script crea automáticamente el entorno `.venv` e instala las dependencias
@@ -535,7 +535,7 @@ protección equivalente con *junction* sí se prueba.
 ## 14. Estructura del proyecto y versión portable
 
 ```
-IA Day\
+CoraNotes\
 ├─ Iniciar CoraNotes.bat · Detener CoraNotes.bat · Demo CoraNotes.bat · Detener Demo.bat · Reiniciar Demo.bat · Mostrar Cora.bat
 ├─ .env.example · .gitignore · requirements.txt (versiones exactas) · requirements.in · requirements-dev.txt
 ├─ coranotes\              código
