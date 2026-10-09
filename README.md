@@ -1,5 +1,7 @@
 # CoraNotes
 
+Asistente de registro diario con un gatito interactivo de escritorio que se alimenta al cargar tus actividades. Incluye recordatorios configurables, seguimiento de avances y generación de resúmenes con Gemini para preparar presentaciones semanales en Claude.
+
 [![Pruebas](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml/badge.svg)](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml)
 [![Release](https://img.shields.io/github/v/release/Miike99/CoraNotes?label=descargar)](https://github.com/Miike99/CoraNotes/releases/latest)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
