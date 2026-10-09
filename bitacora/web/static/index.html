@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoraNotes</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="saltar" href="#vista">Saltar al contenido</a>
+  <header class="barra">
+    <div class="marca">CoraNotes <span id="insignia-demo" class="insignia demo" hidden>MODO DEMO · datos ficticios</span></div>
+    <nav aria-label="Secciones">
+      <a href="#/inicio" data-ruta="inicio">Inicio <span id="contador-avisos" class="contador" hidden></span></a>
+      <a href="#/registro" data-ruta="registro">Registro diario</a>
+      <a href="#/historial" data-ruta="historial">Historial y documentos</a>
+      <a href="#/prompt" data-ruta="prompt">Resumen y prompt</a>
+      <a href="#/config" data-ruta="config">Configuración</a>
+    </nav>
+  </header>
+  <div id="mensajes" class="mensajes" role="status" aria-live="polite"></div>
+  <main id="vista" tabindex="-1"><p>Cargando…</p></main>
+  <footer class="pie">Servidor local en 127.0.0.1 · Los datos se guardan solo en esta computadora · La app no envía nada a Claude</footer>
+</body>
+</html>

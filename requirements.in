@@ -1,0 +1,10 @@
+# Dependencias directas (las versiones exactas están en requirements.txt)
+fastapi
+uvicorn
+google-genai<3.0.0
+watchdog
+pypdf
+python-docx
+python-multipart
+tzdata
+PySide6-Essentials  # Cora, la mascota de escritorio (Qt for Python, LGPL)

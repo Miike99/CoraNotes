@@ -1,0 +1,2 @@
+Charla rápida con el área de seguridad (ficticia) sobre señalización dentro del simulador.
+Sugieren agregar carteles de bloqueo y etiquetado en la escena de la llenadora.

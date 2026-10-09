@@ -1,0 +1,12 @@
+{
+  "fecha": "2026-10-06",
+  "proyecto": "Nombre del proyecto",
+  "tarea": "Nombre de la tarea (opcional)",
+  "tipo_avance": "en curso",
+  "estado_problema": "sin problema",
+  "actividad": "Qué hiciste.",
+  "avance": "Qué se logró o comprobó.",
+  "problemas": "",
+  "solucion": "",
+  "proximos_pasos": "Qué sigue."
+}

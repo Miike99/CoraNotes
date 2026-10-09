@@ -1,0 +1,24 @@
+# Secretos y entorno
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Datos locales (nunca al repositorio ni a paquetes de demo)
+*.sqlite3
+*.sqlite3-*
+*.db
+datos/
+adjuntos/
+historial/
+copias/
+logs/
+run/
+*.zip
+.venv.roto/
+# Empaquetado (se genera con scripts/empaquetar.py)
+build/
+dist/
