@@ -4,3 +4,5 @@
 *.ps1 text eol=crlf
 *.png binary
 *.zip binary
+# Python portable incluido: se guarda byte por byte (sin conversión de finales de línea)
+runtime/** -text

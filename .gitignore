@@ -22,3 +22,5 @@ run/
 # Empaquetado (se genera con scripts/empaquetar.py)
 build/
 dist/
+# El Python portable incluido sí se versiona (su biblioteca estándar viene en un zip)
+!runtime/python313.zip

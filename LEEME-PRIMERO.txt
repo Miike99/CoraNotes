@@ -1,0 +1,19 @@
+CoraNotes — Windows 10/11 (64 bits)
+===================================
+
+No hace falta instalar nada: esta carpeta ya trae Python (carpeta «runtime») y todas las librerías.
+
+1. Si la descargaste como zip (GitHub → Code → Download ZIP): clic derecho sobre el zip → Propiedades →
+   marcá «Desbloquear» → Aceptar. Después descomprimila donde quieras (por ejemplo en Documentos).
+   Evitá «Archivos de programa». Si la clonaste con git, no hace falta.
+2. Para probar con datos ficticios: doble clic en «Demo CoraNotes.bat» (no usa internet ni Gemini).
+   En Inicio presioná «Cargar datos ficticios»: a los 2 minutos Cora pide comida.
+3. Para usarla con tus datos: «Iniciar CoraNotes.bat». Se abre el navegador y aparece Cora en el escritorio.
+4. Para cerrar todo: «Detener CoraNotes.bat» (o «Detener Demo.bat» para la demo).
+
+Si Windows muestra «Windows protegió su PC» al abrir un .bat: «Más información» → «Ejecutar de todas formas».
+
+Gemini es opcional: copiá «.env.example» como «.env», completá GEMINI_API_KEY y reiniciá la app.
+Tus datos se guardan aparte, en %LOCALAPPDATA%\CoraNotes.
+
+Guía completa: README.md · Licencia: LICENSE (MIT) · Componentes de terceros: TERCEROS.txt

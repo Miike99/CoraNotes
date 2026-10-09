@@ -3,7 +3,6 @@
 Asistente de registro diario con un gatito interactivo de escritorio que se alimenta al cargar tus actividades. Incluye recordatorios configurables, seguimiento de avances y generación de resúmenes con Gemini para preparar presentaciones semanales en Claude.
 
 [![Pruebas](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml/badge.svg)](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml)
-[![Release](https://img.shields.io/github/v/release/Miike99/CoraNotes?label=descargar)](https://github.com/Miike99/CoraNotes/releases/latest)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 
 ![Cora, la mascota de escritorio de CoraNotes](docs/img/cora-estados.png)
@@ -12,9 +11,11 @@ Asistente de registro diario con un gatito interactivo de escritorio que se alim
 
 **Probarlo en 3 minutos (Windows 10/11, sin instalar nada, sin internet ni clave de Gemini):**
 
-1. Descargá el zip de la [última versión](https://github.com/Miike99/CoraNotes/releases/latest) (Assets →
-   `CoraNotes-…-windows-x64.zip`). Antes de descomprimir: clic derecho → Propiedades → **Desbloquear**.
-2. Descomprimilo y hacé doble clic en **`Demo CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio.
+1. Cloná el repositorio (`git clone https://github.com/Miike99/CoraNotes.git`) o, sin Git, usá **Code → Download ZIP**
+   (en ese caso: clic derecho sobre el zip → Propiedades → **Desbloquear**, y descomprimilo). El repositorio ya trae su
+   propio Python en `runtime\`: no hay que instalar nada.
+2. Hacé doble clic en **`Demo CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio (el primer inicio
+   puede tardar hasta un minuto).
 3. En Inicio presioná **Cargar datos ficticios** (un proyecto de VR industrial inventado). A los **2 minutos** Cora pide
    comida; hacé clic en su globo, guardá una actividad y mirá cómo come. A los **6 minutos** se prepara solo el prompt
    semanal para Claude (pantalla «Resumen y prompt»).
@@ -54,15 +55,15 @@ Aplicación local para Windows, de un solo usuario. Sirve para:
 
 ---
 
-## Descargar y usar (versión portable)
+## Descargar y usar (el repositorio es portable)
 
-La forma más simple: **no hay que instalar nada**, ni Python ni librerías.
+**No hay que instalar nada**, ni Python ni librerías: el repositorio incluye un Python 3.13 portable (paquete oficial
+de python.org) con todas las librerías en la carpeta `runtime\`.
 
-1. Descargá `CoraNotes-<versión>-windows-x64.zip` (unos 110 MB).
-2. **Antes de descomprimir:** clic derecho sobre el zip → **Propiedades** → marcá **Desbloquear** → Aceptar.
-   Así Windows no marca cada archivo como «descargado de internet».
-3. Descomprimilo donde quieras, por ejemplo en `Documentos\CoraNotes`. Evitá «Archivos de programa».
-4. Doble clic en **`Iniciar CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio.
+1. Cloná el repositorio (`git clone https://github.com/Miike99/CoraNotes.git`) o descargalo con **Code → Download ZIP**.
+   Si usaste el zip: **antes de descomprimir**, clic derecho → **Propiedades** → marcá **Desbloquear** → Aceptar.
+2. Dejá la carpeta donde quieras, por ejemplo en `Documentos\CoraNotes`. Evitá «Archivos de programa».
+3. Doble clic en **`Iniciar CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio.
    El primer inicio puede tardar hasta un minuto.
 
 Requisitos: Windows 10 u 11 de 64 bits. La carpeta trae su propio Python 3.13 (paquete oficial de python.org) y
@@ -70,10 +71,10 @@ todas las librerías, y no necesita internet salvo para usar Gemini. Si Windows 
 al abrir un `.bat`, elegí **Más información → Ejecutar de todas formas** (pasa con archivos descargados que no
 están firmados).
 
-**Actualizar a una versión nueva:** detené la app, reemplazá la carpeta por la nueva y volvé a iniciar. Tus datos
-viven aparte, en `%LOCALAPPDATA%\CoraNotes`, así que se conservan. Tu `.env`, si lo creaste, copialo a la carpeta nueva.
+**Actualizar a una versión nueva:** detené la app y hacé `git pull` (o reemplazá la carpeta por la nueva) y volvé a
+iniciar. Tus datos viven aparte, en `%LOCALAPPDATA%\CoraNotes`, así que se conservan. Tu `.env` no se toca con `git pull`.
 
-Para trabajar sobre el código (desarrollo, pruebas o armar el zip) seguí la sección 2.
+Para trabajar sobre el código (desarrollo y pruebas) seguí la sección 2.
 
 ## Índice
 
@@ -115,7 +116,8 @@ Para trabajar sobre el código (desarrollo, pruebas o armar el zip) seguí la se
 
 ## 2. Instalación desde el código (desarrollo)
 
-> Si descargaste la **versión portable** (zip con la carpeta `runtime`), salteá esta sección: ya está todo incluido.
+> Para **usar** la app no hace falta esta sección: el repositorio ya trae Python en `runtime\`. Esto es solo para
+> desarrollar y correr las pruebas (que usan un entorno `.venv` aparte).
 
 ### 2.1 Instalar Python
 
@@ -579,6 +581,8 @@ protección equivalente con *junction* sí se prueba.
 CoraNotes\
 ├─ Iniciar CoraNotes.bat · Detener CoraNotes.bat · Demo CoraNotes.bat · Detener Demo.bat · Reiniciar Demo.bat · Mostrar Cora.bat
 ├─ .env.example · .gitignore · requirements.txt (versiones exactas) · requirements.in · requirements-dev.txt
+├─ runtime\               Python 3.13 portable + librerías (no se edita a mano; ver «Regenerar runtime»)
+├─ LEEME-PRIMERO.txt · TERCEROS.txt (licencias de los componentes incluidos) · LICENSE (MIT)
 ├─ coranotes\              código
 │  ├─ __main__.py         arranque (uvicorn en 127.0.0.1, 1 worker, sin reload)
 │  ├─ context.py          arma servicios e hilos de fondo
@@ -597,9 +601,10 @@ CoraNotes\
 Datos (fuera del proyecto): `%LOCALAPPDATA%\CoraNotes\` → `datos\coranotes.sqlite3`, `adjuntos\`, `historial\`,
 `copias\`, `logs\coranotes.log`, `run\`.
 
-### Armar la versión portable (zip para distribuir)
+### Regenerar `runtime\` (al cambiar dependencias)
 
-Desde la carpeta del proyecto, con el entorno de desarrollo ya creado:
+La carpeta `runtime\` se genera con un script; no se edita a mano. Desde la carpeta del proyecto, con el entorno
+de desarrollo ya creado:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\empaquetar.py
@@ -613,16 +618,14 @@ El script:
    precompilados para Windows x64 (no compila nada).
 3. Copia la app (sin pruebas, sin `.venv`, sin `.env` ni datos), genera `LEEME-PRIMERO.txt` y `TERCEROS.txt`
    (licencias de los componentes incluidos) y precompila los `.pyc` para que el primer inicio sea rápido.
-4. Hace una prueba de humo con el Python incluido y genera:
-   - `dist\CoraNotes\` (la carpeta lista para usar, unos 300 MB);
-   - `dist\CoraNotes-<versión>-windows-x64.zip` (unos 110 MB) y su `.sha256`.
+4. Hace una prueba de humo con el Python incluido y genera `dist\CoraNotes\` (carpeta portable completa) y, por si
+   querés mandarla por otro medio, `dist\CoraNotes-<versión>-windows-x64.zip` con su `.sha256`.
 
-`build\` y `dist\` no se guardan en Git. Para publicar una versión: cambiá `__version__` en `coranotes\__init__.py`, hacé commit y creá una etiqueta
-(`git tag v1.0.1` y `git push origin v1.0.1`). GitHub Actions corre las pruebas, arma el zip y lo publica solo
-como *Release* (`.github/workflows/release.yml`).
+Después reemplazá la carpeta del repositorio: borrá `runtime\`, copiá `dist\CoraNotes\runtime\` y
+`dist\CoraNotes\TERCEROS.txt` a la raíz, y hacé commit. `build\` y `dist\` no se guardan en Git.
 
-La versión portable usa los mismos scripts que el código fuente: si existe la carpeta `runtime\`, usan ese Python y
-no crean `.venv`.
+Los scripts usan `runtime\python.exe` cuando existe (uso normal) y crean un `.venv` solo si no está (o para las
+pruebas: `scripts\probar.ps1`).
 
 ---
 
@@ -631,7 +634,7 @@ no crean `.venv`.
 | Problema | Qué hacer |
 |---|---|
 | «No se encontró Python» | Usá la versión portable (trae Python). Desde el código: instalá Python 3.12+ marcando «Add python.exe to PATH» |
-| «El Python incluido en la carpeta runtime no arranca» | Volvé a descomprimir el zip, desbloqueándolo antes (Propiedades → Desbloquear) |
+| «El Python incluido en la carpeta runtime no arranca» | Volvé a clonar o descargar el repositorio (si usaste Download ZIP, desbloquealo antes en Propiedades) |
 | «Windows protegió su PC» al abrir un `.bat` | Más información → Ejecutar de todas formas. Pasa con archivos descargados sin firma digital |
 | «El entorno .venv no funciona en esta PC…» | No es un error: el iniciador lo está recreando. Esperá unos minutos (necesita internet) |
 | «Los datos ficticios ya están cargados» | Usá `Reiniciar Demo.bat` para empezar la demo de nuevo |

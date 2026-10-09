@@ -106,11 +106,11 @@ function Obtener-Pythonw {
     return $null
 }
 
-function Preparar-Entorno {
+function Preparar-Entorno([switch]$Desarrollo) {
     # Versión portable: usa el Python incluido en runtime\ (no instala ni descarga nada).
     # Desarrollo: devuelve .venv\Scripts\python.exe, creándolo o reparándolo si hace falta.
     $ErrorActionPreference = 'Continue'  # uv y pip escriben su progreso en stderr: no es un error
-    if (Es-Portable) {
+    if ((Es-Portable) -and -not $Desarrollo) {
         if (Venv-Funciona $RuntimePortable) { return $RuntimePortable }
         Write-Host 'El Python incluido en la carpeta runtime no arranca.' -ForegroundColor Red
         Write-Host "  Motivo: $($script:MotivoVenv)"
