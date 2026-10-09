@@ -166,7 +166,7 @@ class PetService:
 
     def update_config(self, cambios: dict) -> dict:
         permitidos = {"tamano", "siempre_visible", "sonidos", "reducir_animaciones", "posicion_x", "posicion_y",
-                      "habilitada", "notificacion_respaldo"}
+                      "habilitada", "notificacion_respaldo", "lugar_dormir"}
         cambios = {k: v for k, v in cambios.items() if k in permitidos}
         return self.settings.update("mascota", cambios).model_dump(mode="json")
 

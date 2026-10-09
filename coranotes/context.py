@@ -37,6 +37,7 @@ class AppContext:
         if config.demo and self.settings.get("ia").modo == "gemini":
             self.settings.update("ia", {"modo": "demo"})
         self.notices = NoticeService(self.db, self.clock, notifier or default_notifier(), config.base_url)
+        self.notices.sound_dir = config.paths.run
         self.records = RecordService(self.db, self.clock, config.paths)
         self.evidence = EvidenceService(self.db, self.clock, config.paths, self.settings)
         self.prompts = PromptService(self.db, self.clock, self.settings, config.paths)

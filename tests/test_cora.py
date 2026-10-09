@@ -317,7 +317,7 @@ def test_ventana_qt_offscreen(tmp_path):
                                                                  "habilitada": True},
                    "mostrar_pedido": 0, "url_registro": "http://127.0.0.1:1/#/registro?fecha=2026-10-09"})
     assert ctrl.current_visual.modo == "hambriento"
-    assert ctrl.window.width() > 300                           # tamaño grande aplicado
+    assert ctrl.window.width() == 236 and ctrl.window.height() == 80 + 206  # tamaño grande aplicado
     assert ctrl.window.x() >= 0                                # posición guardada fuera de pantalla: se corrige
     assert not ctrl.window.grab().isNull()
     ctrl.hide_pet()
@@ -327,5 +327,92 @@ def test_ventana_qt_offscreen(tmp_path):
     assert ctrl.window.isVisible() and ctrl.backend.visible is True
     ctrl.refresh_menu()
     assert ctrl.a_posponer.isEnabled()
+    ctrl.backend.stop()
+    ctrl.window.close()
+
+
+# --- dónde duerme Cora (cálculo puro, sin pantalla) ------------------------------------
+def test_posicion_arriba_de_una_ventana_y_sobre_la_barra():
+    from coranotes.mascota.lugares import Rect, perch_position, taskbar_position
+    area = Rect(0, 0, 1920, 1040)
+    ventana = Rect(300, 400, 1300, 900)
+    x, y = perch_position(ventana, area, 236, 286, 230, prefer_x=1000)
+    assert y + 230 == ventana.top                  # la línea de apoyo queda sobre el borde de la ventana
+    assert ventana.left - 236 // 5 <= x <= ventana.right - (236 * 4) // 5
+    assert perch_position(Rect(0, 0, 1920, 1040), area, 236, 286, 230) is None   # pegada arriba: no entra
+    assert perch_position(Rect(300, 400, 400, 900), area, 236, 286, 230) is None  # ventana muy angosta
+    screen = Rect(0, 0, 1920, 1080)
+    x, y = taskbar_position(area, screen, 236, 278, prefer_x=5000)
+    assert y + 278 == 1040 and x == 1920 - 236     # sobre la barra de tareas y dentro de la pantalla
+    x, y = taskbar_position(screen, screen, 236, 278)  # barra oculta: apoyo en el borde inferior
+    assert y + 278 == 1080
+
+
+def test_logica_dormir_fuera_de_casa():
+    b = PetBrain()
+    b.on_server_state({"fecha": "f", "estado": "descanso", "recompensa_pendiente": False}, 0.0)
+    assert b.quiere_dormir(1.0)
+    b.lugar_dormir = "panza"
+    v = b.visual(1.0)
+    assert v.pose == "panza" and v.zzz and v.ojos == "dormidos"
+    b.pet(2.0)
+    v = b.visual(2.3)
+    assert v.pose == "panza" and v.ojos == "felices" and v.corazones > 0   # mimo sin despertarla de golpe
+    b.on_server_state({"fecha": "f", "estado": "hambriento", "recompensa_pendiente": False, "mensaje": "x"}, 3.0)
+    assert not b.quiere_dormir(3.0)                 # con hambre se despierta y pide comida
+
+
+def test_sonidos_sintetizados(tmp_path):
+    import wave
+    from coranotes.mascota import sound
+    for tipo in sound.TIPOS:
+        sig = sound.build(tipo)
+        assert 0.3 < len(sig) / sound.SR < 2.0 and 0.25 <= max(abs(v) for v in sig) <= 0.4
+        path = sound.ensure_wav(tmp_path, tipo)
+        with wave.open(str(path)) as w:
+            assert w.getframerate() == sound.SR and w.getnframes() == len(sig)
+
+
+def test_notificacion_de_respaldo_con_maullido_sin_doble_sonido(ctx, clock):
+    from coranotes.notifier import build_toast_xml
+    assert '<audio silent="true"/>' in build_toast_xml("t", "m", "http://x", None, silencioso=True)
+    assert "<audio" not in build_toast_xml("t", "m", "http://x", None)
+    reproducidos = []
+    ctx.notices._play = lambda tipo: reproducidos.append(tipo)
+    clock.set(local(18, 1))                          # Cora cerrada: avisa Windows
+    ctx.scheduler.tick()
+    enviados = [n for n in ctx.notices.notifier.enviados if n["titulo"] == "CoraNotes"]
+    assert enviados and enviados[0]["silencioso"] is True   # la notificación va sin su sonido propio…
+    ctx.settings.update("mascota", {"sonidos": False})
+    clock.set(local(18, 1, HOY + timedelta(days=3)))
+    ctx.scheduler.tick()
+    enviados = [n for n in ctx.notices.notifier.enviados if n["titulo"] == "CoraNotes"]
+    assert enviados[-1]["silencioso"] is False       # sin maullidos: sonido normal de Windows
+
+
+def test_ventana_qt_duerme_en_la_barra_y_vuelve(tmp_path):
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    pytest.importorskip("PySide6")
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtWidgets import QApplication
+
+    from coranotes.config import AppConfig, Paths
+    from coranotes.mascota.app import PetController
+    app = QApplication.instance() or QApplication([])
+    cfg = AppConfig(paths=Paths(tmp_path / "home"), port=1)
+    cfg.paths.ensure()
+    ctrl = PetController(app, cfg)
+    ctrl.start()
+    base = {"fecha": "2026-10-09", "recompensa_pendiente": False, "mostrar_pedido": 0,
+            "config": {"tamano": "chico", "siempre_visible": True, "reducir_animaciones": True, "sonidos": False,
+                       "posicion_x": None, "posicion_y": None, "habilitada": True, "lugar_dormir": "barra_tareas"}}
+    ctrl.on_state({**base, "estado": "descanso", "mensaje": ""})
+    assert ctrl.lugar_actual == "panza" and ctrl.current_visual.pose == "panza"
+    screen = QGuiApplication.primaryScreen()
+    suelo = ctrl.window.y() + ctrl.window.ground_px("panza")
+    assert suelo == screen.availableGeometry().bottom() + 1   # apoyada en el borde inferior / barra de tareas
+    ctrl.on_state({**base, "estado": "hambriento", "mensaje": MENSAJES["hambriento"]})
+    assert ctrl.lugar_actual is None and ctrl.window.pos() == ctrl.home   # vuelve a su lugar a pedir comida
+    assert ctrl.current_visual.pose == "sentada" and ctrl.current_visual.globo_clic
     ctrl.backend.stop()
     ctrl.window.close()

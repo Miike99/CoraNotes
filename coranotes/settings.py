@@ -142,8 +142,9 @@ class MascotaCfg(BaseModel):
     habilitada: bool = True
     tamano: Literal["chico", "mediano", "grande"] = "mediano"
     siempre_visible: bool = True
-    sonidos: bool = False
+    sonidos: bool = True   # maullidos y sonidos de gato (se pueden apagar)
     reducir_animaciones: bool = False
+    lugar_dormir: Literal["escritorio", "ventanas", "barra_tareas"] = "escritorio"
     notificacion_respaldo: bool = True  # notificación de Windows si Cora está oculta o cerrada
     posicion_x: int | None = Field(None, ge=-100_000, le=100_000)
     posicion_y: int | None = Field(None, ge=-100_000, le=100_000)

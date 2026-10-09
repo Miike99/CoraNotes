@@ -722,18 +722,20 @@ async function vistaConfig(vista) {
     notificacion_respaldo: h('input', { type: 'checkbox', checked: mc.notificacion_respaldo }) };
   const tamano = h('select', {}, [['chico', 'Chico'], ['mediano', 'Mediano'], ['grande', 'Grande']].map(([v, t]) => h('option', { value: v, text: t })));
   tamano.value = mc.tamano;
+  const lugar = h('select', {}, [['escritorio', 'En su lugar del escritorio'], ['ventanas', 'Arriba de la ventana activa'], ['barra_tareas', 'Panza arriba sobre la barra de tareas']].map(([v, t]) => h('option', { value: v, text: t })));
+  lugar.value = mc.lugar_dormir || 'escritorio';
   const pGato = h('div', { class: 'panel' }, h('h2', { text: 'Cora, la mascota de escritorio' }),
     h('p', { class: 'ayuda', text: 'Cora es el recordatorio principal: en los días y horarios configurados arriba, si falta el registro de hoy muestra un plato vacío y pide comida. Registrar una actividad válida de hoy equivale a darle de comer (la animación se ve una vez por día). Con «Hoy no hubo actividad», Cora descansa. Arrastrá a Cora para cambiar su posición; clic derecho para el menú.' }),
     h('label', {}, gat.habilitada, ' Mascota activada'), h('br'),
     h('label', {}, gat.siempre_visible, ' Mantener sobre otras ventanas'), h('br'),
     h('label', {}, gat.reducir_animaciones, ' Reducir animaciones'), h('br'),
-    h('label', {}, gat.sonidos, ' Sonidos (desactivados por defecto)'), h('br'),
+    h('label', {}, gat.sonidos, ' Maullidos y sonidos de gato'), h('br'),
     h('label', {}, gat.notificacion_respaldo, ' Usar notificación de Windows cuando Cora esté oculta o cerrada'),
-    h('div', { class: 'fila2' }, campo('Tamaño', tamano)),
+    h('div', { class: 'fila2' }, campo('Tamaño', tamano), campo('Dónde duerme Cora', lugar, 'Cuando descansa o no la tocás por un rato. Al despertarse vuelve a su lugar.')),
     h('p', { class: 'meta', text: mc.posicion_x !== null ? `Posición guardada: ${mc.posicion_x}, ${mc.posicion_y} (se cambia arrastrándolo)` : 'Posición: esquina inferior derecha (se cambia arrastrándolo).' }),
     h('div', { class: 'acciones' },
       h('button', { type: 'button', class: 'primario', text: 'Guardar opciones de Cora', onclick: async () => {
-        const datos = { tamano: tamano.value };
+        const datos = { tamano: tamano.value, lugar_dormir: lugar.value };
         for (const [k, el] of Object.entries(gat)) datos[k] = el.checked;
         await guardarSeccion('mascota', datos); } }),
       h('button', { type: 'button', text: 'Mostrar a Cora ahora', onclick: () => accion(() => api('POST', '/api/mascota/abrir'), (x) => x.mensaje) }),

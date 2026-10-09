@@ -29,7 +29,7 @@ class Delivery:
 
 
 class NullNotifier:
-    def notify(self, titulo: str, mensaje: str, enlace: str, acciones=None) -> Delivery:
+    def notify(self, titulo: str, mensaje: str, enlace: str, acciones=None, silencioso=False) -> Delivery:
         return Delivery("no_disponible", "Las notificaciones nativas no están disponibles en este sistema.")
 
 
@@ -38,27 +38,29 @@ class RecordingNotifier:
     """Para pruebas: guarda lo que se habría mostrado (no es una notificación real)."""
     enviados: list = field(default_factory=list)
 
-    def notify(self, titulo, mensaje, enlace, acciones=None) -> Delivery:
-        self.enviados.append({"titulo": titulo, "mensaje": mensaje, "enlace": enlace})
+    def notify(self, titulo, mensaje, enlace, acciones=None, silencioso=False) -> Delivery:
+        self.enviados.append({"titulo": titulo, "mensaje": mensaje, "enlace": enlace, "silencioso": silencioso})
         return Delivery("simulada", "Notificación simulada (prueba automática)")
 
 
-def build_toast_xml(titulo: str, mensaje: str, enlace: str, acciones: list[tuple[str, str]] | None) -> str:
+def build_toast_xml(titulo: str, mensaje: str, enlace: str, acciones: list[tuple[str, str]] | None,
+                    silencioso: bool = False) -> str:
     acts = "".join(
         f"<action content={quoteattr(label)} activationType=\"protocol\" arguments={quoteattr(url)}/>"
         for label, url in (acciones or [])[:3])
     return (f"<toast activationType=\"protocol\" launch={quoteattr(enlace)}>"
             f"<visual><binding template=\"ToastGeneric\"><text>{escape(titulo)}</text>"
             f"<text>{escape(mensaje)}</text></binding></visual>"
-            + (f"<actions>{acts}</actions>" if acts else "") + "</toast>")
+            + (f"<actions>{acts}</actions>" if acts else "")
+            + ("<audio silent=\"true\"/>" if silencioso else "") + "</toast>")
 
 
 class WindowsToastNotifier:
     def __init__(self):
         self._lock = threading.Lock()
 
-    def notify(self, titulo: str, mensaje: str, enlace: str, acciones=None) -> Delivery:
-        xml = build_toast_xml(titulo, mensaje, enlace, acciones)
+    def notify(self, titulo: str, mensaje: str, enlace: str, acciones=None, silencioso=False) -> Delivery:
+        xml = build_toast_xml(titulo, mensaje, enlace, acciones, silencioso)
         xml_b64 = base64.b64encode(xml.encode("utf-8")).decode("ascii")
         script = (
             "$ErrorActionPreference = 'Stop'\n"
@@ -111,7 +113,10 @@ class NoticeService:
         self.notifier = notifier
         self.base_url = base_url
 
+    sound_dir = None  # carpeta donde se generan los maullidos (la asigna el contexto)
+
     def add(self, tipo: str, titulo: str, mensaje: str, ruta: str = "#/inicio", nativo: bool = True,
+            sonido: str | None = None,
             clave: str | None = None, acciones: list[tuple[str, str]] | None = None) -> dict:
         with self.db.tx() as c:
             cur = c.execute("INSERT INTO avisos(tipo, titulo, mensaje, enlace, clave_ejecucion, entrega, creado_utc) "
@@ -123,13 +128,25 @@ class NoticeService:
             url = f"{self.base_url}/{ruta}"
             acts = [(label, f"{self.base_url}/{r}") for label, r in (acciones or [])]
             try:
-                d = self.notifier.notify(titulo, mensaje, url, acts)
+                d = self.notifier.notify(titulo, mensaje, url, acts, silencioso=bool(sonido))
+                if sonido and d.estado == "entregada_al_sistema":
+                    self._play(sonido)
             except Exception:  # noqa: BLE001
                 log.exception("Fallo inesperado al notificar")
                 d = Delivery("error", "Fallo inesperado al notificar")
             with self.db.tx() as c:
                 c.execute("UPDATE avisos SET entrega=?, entrega_detalle=? WHERE id=?", (d.estado, d.detalle, aviso_id))
         return self.get(aviso_id)
+
+    def _play(self, tipo: str) -> None:
+        """Maullido de Cora junto con la notificación de Windows (que entonces va sin sonido propio)."""
+        if self.sound_dir is None:
+            return
+        try:
+            from .mascota.sound import ensure_wav, play_file
+            play_file(ensure_wav(self.sound_dir, tipo))
+        except Exception:  # noqa: BLE001
+            log.warning("No se pudo reproducir el maullido")
 
     def get(self, aviso_id: int) -> dict:
         with self.db.read() as c:

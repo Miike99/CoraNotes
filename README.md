@@ -303,6 +303,10 @@ que adjuntar a mano.
 
 ## 8. Cora, la mascota de escritorio, y notificaciones
 
+Cora es una gatita naranja atigrada **dibujada en 2D por código** (estilo ilustración: contorno marrón suave,
+ojos verdes grandes, pecho y patitas blancas, collar celeste con un pescadito dorado). Al ser vectorial se ve nítida
+en los 3 tamaños: parpadea, mueve la cola y las orejas, respira, maúlla, come y duerme.
+
 ### Cómo se comporta
 
 | Situación | Cora |
@@ -326,11 +330,35 @@ mensajes que culpen.
 - **Clic derecho** (o clic derecho en el icono de la bandeja):
   - Registrar actividades de hoy, Abrir CoraNotes y Posponer recordatorio (15 min).
   - Ocultar a Cora (queda en la bandeja), Silenciar recordatorios hasta mañana.
-  - Opciones: mantener sobre otras ventanas, reducir animaciones, sonidos y tamaño.
+  - **Tamaño:** chico, mediano o grande (el chico ocupa unos 140 × 125 píxeles de gato).
+  - **Dónde duerme:** en su lugar del escritorio, arriba de la ventana activa o panza arriba sobre la barra de tareas.
+  - Opciones: mantener sobre otras ventanas, reducir animaciones y maullidos.
   - Cerrar a Cora y Detener todo CoraNotes.
 - **Icono de la bandeja:** un clic vuelve a mostrar a Cora si estaba oculta. Si el icono no se ve, revisá la flecha «^» de la barra de tareas.
-- **Configuración web → Cora, la mascota de escritorio:** tamaño, mantenerla visible, sonidos (**desactivados por defecto**),
+- **Configuración web → Cora, la mascota de escritorio:** tamaño, dónde duerme, mantenerla visible, maullidos,
   reducir animaciones, notificación de respaldo y volver a la esquina.
+
+### Dónde duerme
+
+Cora se duerme cuando el día está en descanso o cuando no la tocás por 5 minutos. Según la opción elegida:
+
+| Opción | Qué hace |
+|---|---|
+| En su lugar del escritorio (por defecto) | Se duerme sentada donde la dejaste |
+| Arriba de la ventana activa | Se acuesta sobre el borde superior de la ventana activa, con las patitas y la cola colgando. Si movés la ventana, la sigue. Las ventanas **maximizadas** no dejan lugar arriba: en ese caso duerme sobre la barra de tareas |
+| Panza arriba sobre la barra de tareas | Se acuesta panza arriba justo encima de la barra de tareas |
+
+Cuando se despierta (porque la acariciás, la arrastrás o tiene hambre), vuelve a su lugar. Para ubicarse solo lee
+**la posición y el tamaño** de las ventanas: nunca títulos, contenido ni capturas de pantalla.
+
+### Maullidos y sonidos
+
+Los sonidos se generan por código, sin grabaciones ni descargas: un maullido «miau» para pedir comida, un trino
+contento al comer y un ronroneo con las caricias. Vienen **activados**; se apagan con clic derecho → Opciones →
+Maullidos, o desde Configuración.
+
+Cuando Cora está oculta o cerrada y avisa la notificación de Windows, la notificación sale sin su sonido propio y
+suena el maullido, para que no suenen dos cosas a la vez. Con los maullidos apagados, Windows usa su sonido normal.
 
 ### Qué canal avisa (sin duplicados)
 
@@ -495,7 +523,7 @@ Las pruebas usan **reloj, notificaciones y Gemini simulados**: no consumen la AP
 | 9 | Regenerar conserva las ediciones manuales y las instantáneas | `test_9_*` |
 | 10 | Host y Origin, CSRF, traversal, HTML malicioso, inyección, secretos, tamaños, DOCX inflado y junctions | `test_10*` |
 | 11 | El cierre programado prepara el prompt y avisa sin anunciar una presentación; casos sin datos y con Gemini caído | `test_11_*`, `test_11b_*` |
-| Cora | Hambre si falta el registro y nada si ya existe; come al guardar sin esperar a Gemini; funciona sin Gemini; recompensa única que persiste tras reiniciar; borradores, archivos, imágenes y días anteriores no cuentan; descanso, posponer y silenciar; canal Cora o Windows sin duplicar; zona horaria; token local; ventana sin foco, bandeja y límites de pantalla (Qt offscreen) | [`tests/test_cora.py`](tests/test_cora.py) |
+| Cora | Hambre si falta el registro y nada si ya existe; come al guardar sin esperar a Gemini; funciona sin Gemini; recompensa única que persiste tras reiniciar; borradores, archivos, imágenes y días anteriores no cuentan; descanso, posponer y silenciar; canal Cora o Windows sin duplicar; zona horaria; token local; ventana sin foco, bandeja y límites de pantalla; dónde duerme (ventana y barra de tareas) y regreso al despertarse; maullidos sintetizados y notificación sin doble sonido (Qt offscreen) | [`tests/test_cora.py`](tests/test_cora.py) |
 
 La prueba con **enlace simbólico** se omite si Windows no permite crearlos (requiere modo desarrollador). La
 protección equivalente con *junction* sí se prueba.
@@ -582,6 +610,7 @@ no crean `.venv`.
 - No hace OCR ni analiza imágenes.
 - No fusiona automáticamente tu versión editada con el borrador nuevo.
 - Las notificaciones y Cora dependen de Windows y de que la PC esté encendida y con la sesión iniciada.
-- Cora usa gráficos simples dibujados en código. Se pueden reemplazar por sprites con licencia en una versión futura.
+- Los maullidos son sintéticos: suenan a gato de dibujo animado, no a una grabación real.
+- Con varios monitores con distinta escala, la posición «arriba de la ventana» puede quedar unos píxeles corrida.
 - Mejoras futuras, fuera del alcance de esta versión: envío automático a Claude (requiere API), varios usuarios,
   despliegue público, cifrado de datos en reposo y un instalador.

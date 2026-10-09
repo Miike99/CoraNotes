@@ -1,32 +1,35 @@
-"""Ventana de Cora, menú, icono de bandeja y sincronización con el backend.
+"""Ventana de Cora, menú, icono de bandeja, lugares para dormir y sincronización con el backend.
 
 No captura pantalla, teclado global, cámara ni micrófono. No toma el foco: la ventana es una
-herramienta sin marco que no acepta foco y se muestra sin activarse.
+herramienta sin marco que no acepta foco y se muestra sin activarse. Para dormir arriba de una
+ventana solo se leen posiciones y tamaños de ventanas.
 """
 from __future__ import annotations
 
 import logging
 import time
 
-from PySide6.QtCore import QPoint, QRectF, Qt, QTimer, QUrl
+from PySide6.QtCore import QEasingCurve, QPoint, QPropertyAnimation, QRectF, Qt, QTimer, QUrl
 from PySide6.QtGui import QAction, QActionGroup, QDesktopServices, QGuiApplication, QIcon, QPainter
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon, QWidget
 
+from . import lugares
 from .client import Backend
-from .drawing import BASE_H, BASE_W, ESCALAS, GATO_RECT, GLOBO_RECT, PLATO_RECT, paint_pet, tray_pixmap
+from .drawing import (ESCALAS, GATO_H, GATO_RECT, GATO_W, GLOBO_H, GLOBO_W, PLATO_RECT, SUELO, bubble_rect,
+                      paint_bubble, paint_cat, tray_pixmap)
 from .logic import PetBrain, clamp_to_area
 from .sound import SoundPlayer
 
 log = logging.getLogger("coranotes.mascota")
 DRAG_THRESHOLD = 6
-FAST_MS, IDLE_MS, REDUCED_MS = 50, 140, 500
+FAST_MS, IDLE_MS, REDUCED_MS = 50, 120, 500
 
 
 class PetWindow(QWidget):
     def __init__(self, ctrl: "PetController"):
         super().__init__(None)
         self.ctrl = ctrl
-        self.escala = 1.0
+        self.escala = ESCALAS["mediano"]
         self._press: QPoint | None = None
         self._offset = QPoint()
         self._dragging = False
@@ -46,18 +49,30 @@ class PetWindow(QWidget):
         if visible:
             self.show()
 
+    # ----- geometría: globo arriba (en píxeles) y gato debajo (escalado) -----
     def set_scale(self, tamano: str) -> None:
-        self.escala = ESCALAS.get(tamano, 1.0)
-        self.setFixedSize(int(BASE_W * self.escala), int(BASE_H * self.escala))
+        self.escala = ESCALAS.get(tamano, ESCALAS["mediano"])
+        cat_w = GATO_W * self.escala
+        self.cat_x0 = max(0.0, (GLOBO_W - cat_w) / 2)
+        self.setFixedSize(int(max(cat_w, GLOBO_W)), int(GLOBO_H + GATO_H * self.escala))
         self.update()
 
-    def _logical(self, pos) -> tuple[float, float]:
-        return pos.x() / self.escala, pos.y() / self.escala
+    def ground_px(self, pose: str) -> int:
+        """Distancia desde el borde superior de la ventana hasta la línea de apoyo de la pose."""
+        return int(GLOBO_H + SUELO[pose] * self.escala)
+
+    def to_cat(self, pos) -> tuple[float, float]:
+        return (pos.x() - self.cat_x0) / self.escala, (pos.y() - GLOBO_H) / self.escala
 
     def paintEvent(self, _event) -> None:
+        v = self.ctrl.current_visual
         p = QPainter(self)
+        p.save()
+        p.translate(self.cat_x0, GLOBO_H)
         p.scale(self.escala, self.escala)
-        paint_pet(p, self.ctrl.current_visual, self.ctrl.now())
+        paint_cat(p, v, self.ctrl.now())
+        p.restore()
+        paint_bubble(p, v, self.cat_x0 + 96 * self.escala)
         p.end()
 
     # ----- ratón: arrastrar, acariciar, abrir formulario -----
@@ -73,6 +88,7 @@ class PetWindow(QWidget):
         gp = e.globalPosition().toPoint()
         if not self._dragging and (gp - self._press).manhattanLength() > DRAG_THRESHOLD:
             self._dragging = True
+            self.ctrl.drag_started()
         if self._dragging:
             self.move(gp - self._offset)
 
@@ -82,16 +98,16 @@ class PetWindow(QWidget):
         was_drag = self._dragging
         self._press, self._dragging = None, False
         if was_drag:
-            self.ctrl.ensure_visible(save=True)
+            self.ctrl.drag_finished()
             return
-        x, y = self._logical(e.position())
         v = self.ctrl.current_visual
-        globo = QRectF(GLOBO_RECT)
-        if v.globo and v.globo_clic and globo.contains(x, y):
+        if v.globo and v.globo_clic and bubble_rect(v).contains(e.position()):
             self.ctrl.open_form()
-        elif PLATO_RECT.contains(x, y):
+            return
+        x, y = self.to_cat(e.position())
+        if v.pose == "sentada" and PLATO_RECT.contains(x, y):
             self.ctrl.open_form()
-        elif GATO_RECT.contains(x, y):
+        elif (GATO_RECT if v.pose == "sentada" else QRectF(0, 60, GATO_W, GATO_H - 60)).contains(x, y):
             self.ctrl.pet()
 
     def contextMenuEvent(self, e) -> None:
@@ -110,6 +126,10 @@ class PetController:
         self.cfg: dict = {}
         self._pos_aplicada = False
         self._mostrar_visto: int | None = None
+        self.home = QPoint()          # lugar elegido por la persona (despierta)
+        self.lugar_actual: str | None = None   # «ventana» / «panza» mientras duerme fuera de casa
+        self._ultimo_chequeo = 0.0
+        self._anim: QPropertyAnimation | None = None
         self.sound = SoundPlayer(config.paths.run)
         self.window = PetWindow(self)
         self.backend = Backend(config.base_url, config.paths.run)
@@ -138,7 +158,7 @@ class PetController:
     def now(self) -> float:
         return time.monotonic() - self.t0
 
-    # ---------- arranque ----------
+    # ---------- arranque y posición ----------
     def start(self) -> None:
         self._default_position()
         self.window.show()
@@ -146,23 +166,99 @@ class PetController:
         self.backend.start()
 
     def _default_position(self) -> None:
-        screen = QGuiApplication.primaryScreen()
-        area = screen.availableGeometry()
-        self.window.move(area.right() - self.window.width() - 24, area.bottom() - self.window.height() - 24)
+        area = QGuiApplication.primaryScreen().availableGeometry()
+        self.window.move(area.right() - self.window.width() - 24, area.bottom() - self.window.height() - 12)
+        self.home = self.window.pos()
 
     def _screen_added(self, screen) -> None:
         screen.availableGeometryChanged.connect(lambda *_: self.ensure_visible())
 
+    def _screen_for(self, point: QPoint):
+        return QGuiApplication.screenAt(point) or QGuiApplication.primaryScreen()
+
     def ensure_visible(self, save: bool = False) -> None:
         """Mantiene la ventana dentro del área visible del monitor donde está (o del principal)."""
+        if self.lugar_actual:  # durmiendo fuera de casa: se recalcula el lugar
+            self._ultimo_chequeo = 0.0
+            return
         geo = self.window.frameGeometry()
-        screen = QGuiApplication.screenAt(geo.center()) or QGuiApplication.primaryScreen()
-        a = screen.availableGeometry()
+        a = self._screen_for(geo.center()).availableGeometry()
         x, y = clamp_to_area(geo.x(), geo.y(), geo.width(), geo.height(), (a.x(), a.y(), a.width(), a.height()))
         if (x, y) != (geo.x(), geo.y()):
             self.window.move(x, y)
+        self.home = QPoint(x, y)
         if save:
             self.backend.command("config", {"posicion_x": x, "posicion_y": y})
+
+    def drag_started(self) -> None:
+        if self._anim:
+            self._anim.stop()
+        if self.lugar_actual:  # al arrastrarla, se despierta y vuelve a la pose sentada
+            self.lugar_actual = None
+            self.brain.lugar_dormir = None
+            self.brain.pet(self.now())
+
+    def drag_finished(self) -> None:
+        self.ensure_visible(save=True)
+
+    def _glide(self, target: QPoint) -> None:
+        if self._anim:
+            self._anim.stop()
+        if self.brain.reducido or (self.window.pos() - target).manhattanLength() < 4:
+            self.window.move(target)
+            return
+        self._anim = QPropertyAnimation(self.window, b"pos")
+        self._anim.setDuration(650)
+        self._anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        self._anim.setEndValue(target)
+        self._anim.start()
+
+    # ---------- dormir arriba de una ventana o sobre la barra de tareas ----------
+    def _sleep_target(self) -> tuple[str, QPoint] | None:
+        lugar = self.cfg.get("lugar_dormir", "escritorio")
+        if lugar == "escritorio":
+            return None
+        w = self.window
+        home_center = QPoint(self.home.x() + w.width() // 2, self.home.y() + w.height() // 2)
+        screen = self._screen_for(home_center)
+        avail, geo = screen.availableGeometry(), screen.geometry()
+        area = lugares.Rect(avail.left(), avail.top(), avail.right() + 1, avail.bottom() + 1)
+        if lugar == "ventanas":
+            dpr = screen.devicePixelRatio() or 1.0
+            ground = w.ground_px("ventana")
+            for r in lugares.candidate_windows():
+                rect = lugares.Rect(int(r.left / dpr), int(r.top / dpr), int(r.right / dpr), int(r.bottom / dpr))
+                pos = lugares.perch_position(rect, area, w.width(), w.height(), ground, prefer_x=self.home.x())
+                if pos is not None:
+                    return "ventana", QPoint(*pos)
+            # sin ventanas con lugar arriba: sobre la barra de tareas
+        full = lugares.Rect(geo.left(), geo.top(), geo.right() + 1, geo.bottom() + 1)
+        x, y = lugares.taskbar_position(area, full, w.width(), w.ground_px("panza"), prefer_x=self.home.x())
+        return "panza", QPoint(x, y)
+
+    def _update_sleep_place(self, t: float) -> None:
+        quiere = self.brain.quiere_dormir(t) and self.window.isVisible() and self._press_free()
+        if not quiere or self.cfg.get("lugar_dormir", "escritorio") == "escritorio":
+            if self.lugar_actual:
+                self.lugar_actual = None
+                self.brain.lugar_dormir = None
+                self._glide(self.home)
+            return
+        if self.lugar_actual and t - self._ultimo_chequeo < 1.5:
+            return
+        self._ultimo_chequeo = t
+        destino = self._sleep_target()
+        if destino is None:
+            return
+        pose, pos = destino
+        if pose != self.lugar_actual or (pos - self.window.pos()).manhattanLength() > 3:
+            if self._anim is None or self._anim.state() != QPropertyAnimation.State.Running or pose != self.lugar_actual:
+                self.lugar_actual = pose
+                self.brain.lugar_dormir = pose
+                self._glide(pos)
+
+    def _press_free(self) -> bool:
+        return self.window._press is None
 
     # ---------- estado del backend ----------
     def on_state(self, st: dict) -> None:
@@ -199,8 +295,12 @@ class PetController:
         old = self.cfg
         self.cfg = cfg
         if cfg.get("tamano") != old.get("tamano"):
+            bottom = self.window.y() + self.window.height()
             self.window.set_scale(cfg.get("tamano", "mediano"))
+            if old:  # mantiene a Cora apoyada en el mismo lugar al cambiar de tamaño
+                self.window.move(self.window.x(), bottom - self.window.height())
             self.ensure_visible()
+            self._ultimo_chequeo = 0.0
         if cfg.get("siempre_visible") != old.get("siempre_visible"):
             self.window.apply_flags(bool(cfg.get("siempre_visible", True)))
         self.brain.reducido = bool(cfg.get("reducir_animaciones"))
@@ -209,6 +309,8 @@ class PetController:
             if cfg.get("posicion_x") is not None and cfg.get("posicion_y") is not None:
                 self.window.move(int(cfg["posicion_x"]), int(cfg["posicion_y"]))
                 self.ensure_visible()
+        if cfg.get("lugar_dormir") != old.get("lugar_dormir"):
+            self._ultimo_chequeo = 0.0
         if cfg.get("habilitada") is False:
             log.info("Cora está desactivada en la configuración: se cierra")
             self.quit()
@@ -216,6 +318,7 @@ class PetController:
     # ---------- animación ----------
     def tick(self) -> None:
         t = self.now()
+        self._update_sleep_place(t)
         self.current_visual = self.brain.visual(t)
         if self.window.isVisible():
             self.window.update()
@@ -226,7 +329,7 @@ class PetController:
         else:
             interval = IDLE_MS
         if not self.window.isVisible():
-            interval = 2000  # oculto: casi sin consumo
+            interval = 2000  # oculta: casi sin consumo
         if self.timer.interval() != interval:
             self.timer.setInterval(interval)
 
@@ -259,16 +362,11 @@ class PetController:
         if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
             self.show_pet()
 
-    def _toggle(self, clave: str, valor: bool) -> None:
-        self.cfg[clave] = valor
-        self.apply_config(dict(self.cfg))
-        self.backend.command("config", {clave: valor})
-
-    def _set_size(self, tamano: str) -> None:
-        self.backend.command("config", {"tamano": tamano})
+    def _set_cfg(self, clave: str, valor) -> None:
         cfg = dict(self.cfg)
-        cfg["tamano"] = tamano
+        cfg[clave] = valor
         self.apply_config(cfg)
+        self.backend.command("config", {clave: valor})
 
     def _silence(self) -> None:
         activar = self.state.get("estado") != "silenciado"
@@ -292,6 +390,18 @@ class PetController:
             self.tray.hide()
 
     # ---------- menú ----------
+    def _radio_menu(self, parent: QMenu, titulo: str, clave: str, opciones) -> dict:
+        sub = parent.addMenu(titulo)
+        grupo = QActionGroup(sub)
+        acciones = {}
+        for valor, texto in opciones:
+            a = QAction(texto, sub, checkable=True)
+            a.triggered.connect(lambda _=False, v=valor: self._set_cfg(clave, v))
+            grupo.addAction(a)
+            sub.addAction(a)
+            acciones[valor] = a
+        return acciones
+
     def _build_menu(self) -> None:
         m = self.menu
         self.a_mostrar = m.addAction("Mostrar a Cora", self.show_pet)
@@ -301,25 +411,22 @@ class PetController:
         self.a_ocultar = m.addAction("Ocultar a Cora (queda en la bandeja)", self.hide_pet)
         self.a_silenciar = m.addAction("Silenciar recordatorios hasta mañana", self._silence)
         m.addSeparator()
+        self.a_tam = self._radio_menu(m, "Tamaño", "tamano",
+                                      (("chico", "Chico"), ("mediano", "Mediano"), ("grande", "Grande")))
+        self.a_lugar = self._radio_menu(m, "Dónde duerme", "lugar_dormir",
+                                        (("escritorio", "En su lugar del escritorio"),
+                                         ("ventanas", "Arriba de la ventana activa"),
+                                         ("barra_tareas", "Panza arriba sobre la barra de tareas")))
         opciones = m.addMenu("Opciones")
         self.a_encima = opciones.addAction("Mantener sobre otras ventanas")
         self.a_encima.setCheckable(True)
-        self.a_encima.triggered.connect(lambda v: self._toggle("siempre_visible", v))
+        self.a_encima.triggered.connect(lambda v: self._set_cfg("siempre_visible", v))
         self.a_reducir = opciones.addAction("Reducir animaciones")
         self.a_reducir.setCheckable(True)
-        self.a_reducir.triggered.connect(lambda v: self._toggle("reducir_animaciones", v))
-        self.a_sonidos = opciones.addAction("Sonidos")
+        self.a_reducir.triggered.connect(lambda v: self._set_cfg("reducir_animaciones", v))
+        self.a_sonidos = opciones.addAction("Maullidos y sonidos")
         self.a_sonidos.setCheckable(True)
-        self.a_sonidos.triggered.connect(lambda v: self._toggle("sonidos", v))
-        tam = opciones.addMenu("Tamaño")
-        grupo = QActionGroup(tam)
-        self.a_tam = {}
-        for clave, texto in (("chico", "Chico"), ("mediano", "Mediano"), ("grande", "Grande")):
-            a = QAction(texto, tam, checkable=True)
-            a.triggered.connect(lambda _=False, c=clave: self._set_size(c))
-            grupo.addAction(a)
-            tam.addAction(a)
-            self.a_tam[clave] = a
+        self.a_sonidos.triggered.connect(lambda v: self._set_cfg("sonidos", v))
         m.addSeparator()
         m.addAction("Cerrar a Cora (CoraNotes sigue funcionando)", self.quit)
         m.addAction("Detener todo CoraNotes…", self._stop_all)
@@ -335,9 +442,10 @@ class PetController:
         self.a_encima.setChecked(bool(self.cfg.get("siempre_visible", True)))
         self.a_reducir.setChecked(bool(self.cfg.get("reducir_animaciones")))
         self.a_sonidos.setChecked(bool(self.cfg.get("sonidos")))
-        tam = self.cfg.get("tamano", "mediano")
-        for clave, a in self.a_tam.items():
-            a.setChecked(clave == tam)
+        for valor, a in self.a_tam.items():
+            a.setChecked(valor == self.cfg.get("tamano", "mediano"))
+        for valor, a in self.a_lugar.items():
+            a.setChecked(valor == self.cfg.get("lugar_dormir", "escritorio"))
 
     def _update_tray(self) -> None:
         if self.tray is None:

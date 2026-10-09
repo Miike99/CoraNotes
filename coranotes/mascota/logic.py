@@ -30,11 +30,16 @@ class Visual:
     zzz: bool = False
     desconectado: bool = False
     gris: bool = False
+    pose: str = "sentada"  # sentada | ventana (arriba de una ventana) | panza (sobre la barra de tareas)
+    boca_abierta: bool = False
+    inclinacion: float = 0.0  # grados de la cabeza
+    reducido: bool = False
 
 
 @dataclass
 class PetBrain:
     reducido: bool = False
+    lugar_dormir: str | None = None  # «ventana» o «panza» mientras duerme fuera de su lugar
     rng: random.Random = field(default_factory=random.Random)
     estado: dict | None = None
     conectado: bool = False
@@ -82,6 +87,15 @@ class PetBrain:
     def modo(self) -> str:
         return (self.estado or {}).get("estado", "tranquilo")
 
+    def quiere_dormir(self, t: float) -> bool:
+        """¿Cora debería estar durmiendo? (sin contar la reacción momentánea a una caricia)"""
+        modo = (self.estado or {}).get("estado", "tranquilo")
+        if not self.conectado or t < self.comiendo_hasta or modo in ("hambriento", "comiendo"):
+            return False
+        if modo in ("descanso", "silenciado"):
+            return True
+        return modo in ("tranquilo", "alimentado") and t - self.ultima_interaccion > SLEEP_AFTER_SECONDS
+
     def is_animating(self, t: float) -> bool:
         return t < self.comiendo_hasta or t - self.caricia_desde < PET_SECONDS
 
@@ -106,7 +120,9 @@ class PetBrain:
         if acariciando or modo == "hambriento":
             dormido = False
 
-        v = Visual(modo=modo, ojos="abiertos", plato="ninguno")
+        v = Visual(modo=modo, ojos="abiertos", plato="ninguno", reducido=self.reducido)
+        if not self.reducido:
+            v.inclinacion = 2.5 * math.sin(t * 0.6)
         if dormido:
             v.ojos, v.zzz = "dormidos", True
         elif acariciando or (modo == "alimentado" and t < self.gracias_hasta):
@@ -118,14 +134,16 @@ class PetBrain:
             v.plato = "vacio"
             v.globo = st.get("mensaje") or "¡Hora de mi comida!"
             v.globo_clic = True
+            v.inclinacion = -5 + (2 * math.sin(t * 2.0) if not self.reducido else 0)
+            v.boca_abierta = (t % 1.8) < 0.45 and not self.reducido  # maullido
         elif modo == "comiendo":
             dur = max(0.01, self.comiendo_hasta - self.comiendo_desde)
             avance = min(1.0, max(0.0, (t - self.comiendo_desde) / dur))
             v.plato, v.comida = "lleno", 1.0 - 0.75 * avance
             v.ojos = "felices"
             v.globo = "¡Ñam! Gracias por contarme tu día."
-            if not self.reducido:
-                v.cabeza_y = 6.0 * abs(math.sin(t * 9.0))
+            v.inclinacion = 12
+            v.cabeza_y = 8.0 + (5.0 * abs(math.sin(t * 9.0)) if not self.reducido else 0)
         elif modo == "alimentado" and t < self.gracias_hasta:
             v.plato, v.comida = "lleno", 0.25
             v.globo = st.get("mensaje") or "¡Gracias por la comida!"
@@ -137,6 +155,13 @@ class PetBrain:
             v.cola = 0.08 * math.sin(t * 0.8)
         if acariciando:
             v.corazones = min(1.0, (t - self.caricia_desde) / PET_SECONDS)
+            v.inclinacion = 8 * math.sin(t * 6) if not self.reducido else 6
+        if dormido:
+            v.inclinacion = 6
+        if self.lugar_dormir in ("ventana", "panza") and self.conectado:
+            v.pose = self.lugar_dormir  # acostada arriba de una ventana o sobre la barra de tareas
+            v.zzz = not acariciando
+            v.ojos = "felices" if acariciando else "dormidos"
         if not self.conectado:
             v.desconectado = True
             v.gris = self.estado is None

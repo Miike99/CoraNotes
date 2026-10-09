@@ -149,8 +149,9 @@ class Scheduler:
             return
         d = due_dates[0]
         texto = REMINDER_TEXT if canal != "mascota" else "Cora pidió su comida: registrá el día."
+        maullido = "hambre" if nativo and self.settings.get("mascota").sonidos else None
         self.notices.add("recordatorio", "CoraNotes", texto, f"#/registro?fecha={d.isoformat()}",
-                         clave=due[0].clave, nativo=nativo,
+                         clave=due[0].clave, nativo=nativo, sonido=maullido,
                          acciones=[("Abrir registro", f"#/registro?fecha={d.isoformat()}"),
                                    ("Posponer o descartar", "#/inicio")])
 
