@@ -416,3 +416,25 @@ def test_ventana_qt_duerme_en_la_barra_y_vuelve(tmp_path):
     assert ctrl.current_visual.pose == "sentada" and ctrl.current_visual.globo_clic
     ctrl.backend.stop()
     ctrl.window.close()
+
+
+def test_menu_probar_sonidos(tmp_path):
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    pytest.importorskip("PySide6")
+    from PySide6.QtWidgets import QApplication
+
+    from coranotes.config import AppConfig, Paths
+    from coranotes.mascota.app import PetController
+    app = QApplication.instance() or QApplication([])
+    cfg = AppConfig(paths=Paths(tmp_path / "home"), port=1)
+    cfg.paths.ensure()
+    ctrl = PetController(app, cfg)
+    tocados = []
+    ctrl.sound.play = tocados.append
+    opciones = next(a.menu() for a in ctrl.menu.actions() if a.text() == "Opciones")
+    prueba = next(a.menu() for a in opciones.actions() if a.text() == "Probar sonidos")
+    for accion in prueba.actions():
+        accion.trigger()
+    assert tocados == ["hambre", "comer", "ronroneo", "saludo"]
+    ctrl.backend.stop()
+    ctrl.window.close()

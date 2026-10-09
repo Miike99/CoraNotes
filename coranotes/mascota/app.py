@@ -348,10 +348,13 @@ class PetController:
         QDesktopServices.openUrl(QUrl(self.state.get("url_app") or f"{self.config.base_url}/"))
 
     def show_pet(self) -> None:
+        was_hidden = not self.window.isVisible()
         self.window.show()
         self.ensure_visible()
         self.backend.visible = True
         self.backend.sync_now()
+        if was_hidden and self.cfg.get("sonidos"):
+            self.sound.play("saludo")  # maullidito al volver desde la bandeja
 
     def hide_pet(self) -> None:
         self.window.hide()
@@ -427,6 +430,10 @@ class PetController:
         self.a_sonidos = opciones.addAction("Maullidos y sonidos")
         self.a_sonidos.setCheckable(True)
         self.a_sonidos.triggered.connect(lambda v: self._set_cfg("sonidos", v))
+        prueba = opciones.addMenu("Probar sonidos")  # suenan aunque los maullidos estén apagados
+        for tipo, texto in (("hambre", "Maullido de hambre"), ("comer", "Trino al comer"),
+                            ("ronroneo", "Ronroneo (caricia)"), ("saludo", "Saludo")):
+            prueba.addAction(texto, lambda t=tipo: self.sound.play(t))
         m.addSeparator()
         m.addAction("Cerrar a Cora (CoraNotes sigue funcionando)", self.quit)
         m.addAction("Detener todo CoraNotes…", self._stop_all)

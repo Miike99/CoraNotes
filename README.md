@@ -357,6 +357,8 @@ Los sonidos se generan por código, sin grabaciones ni descargas: un maullido «
 contento al comer y un ronroneo con las caricias. Vienen **activados**; se apagan con clic derecho → Opciones →
 Maullidos, o desde Configuración.
 
+Para escucharlos cuando quieras: clic derecho sobre Cora → Opciones → **Probar sonidos** (suenan aunque estén apagados).
+
 Cuando Cora está oculta o cerrada y avisa la notificación de Windows, la notificación sale sin su sonido propio y
 suena el maullido, para que no suenen dos cosas a la vez. Con los maullidos apagados, Windows usa su sonido normal.
 
