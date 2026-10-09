@@ -1,5 +1,44 @@
 # CoraNotes
 
+[![Pruebas](https://github.com/USUARIO_GITHUB/CoraNotes/actions/workflows/pruebas.yml/badge.svg)](https://github.com/USUARIO_GITHUB/CoraNotes/actions/workflows/pruebas.yml)
+[![Release](https://img.shields.io/github/v/release/USUARIO_GITHUB/CoraNotes?label=descargar)](https://github.com/USUARIO_GITHUB/CoraNotes/releases/latest)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
+
+![Cora, la mascota de escritorio de CoraNotes](docs/img/cora-estados.png)
+
+## Para quienes revisan el challenge
+
+**Probarlo en 3 minutos (Windows 10/11, sin instalar nada, sin internet ni clave de Gemini):**
+
+1. Descargá el zip de la [última versión](https://github.com/USUARIO_GITHUB/CoraNotes/releases/latest) (Assets →
+   `CoraNotes-…-windows-x64.zip`). Antes de descomprimir: clic derecho → Propiedades → **Desbloquear**.
+2. Descomprimilo y hacé doble clic en **`Demo CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio.
+3. En Inicio presioná **Cargar datos ficticios** (un proyecto de VR industrial inventado). A los **2 minutos** Cora pide
+   comida; hacé clic en su globo, guardá una actividad y mirá cómo come. A los **6 minutos** se prepara solo el prompt
+   semanal para Claude (pantalla «Resumen y prompt»).
+4. Clic derecho sobre Cora: tamaños, dónde duerme, **Opciones → Probar sonidos**. Para cerrar: `Detener Demo.bat`.
+
+Si Windows muestra «Windows protegió su PC» al abrir un `.bat`: **Más información → Ejecutar de todas formas** (los
+scripts no están firmados). La sección 12 tiene una demostración guiada de 10 minutos.
+
+**Qué cubre:**
+
+| Pedido del challenge | Dónde verlo |
+|---|---|
+| Registro diario local, borradores, papelera, revisiones y exportación Markdown | Registro diario e Historial (secciones 5 y 10) |
+| Recordatorio condicional con días, horarios, zona horaria, excepciones y posponer | Configuración, y Cora a la hora configurada (secciones 5 y 8) |
+| Mascota de escritorio que se alimenta registrando el día | Cora (sección 8) |
+| Carpeta de entrada (.txt, .md, .json, .docx, .pdf e imágenes) | Configuración → Carpeta de entrada (sección 6) |
+| Resumen con Gemini (con consentimiento), plantilla sin IA y modo demo | Resumen y prompt (sección 7) |
+| Prompt para Claude con versiones, ediciones manuales, cierre semanal e instantáneas | Resumen y prompt (sección 7) |
+| Seguridad: solo 127.0.0.1, CSRF, validaciones, sin secretos en logs, inyección de prompts | Sección 11 |
+| Pruebas automáticas (reloj, notificaciones y Gemini simulados) | `tests/` y el indicador «Pruebas» de arriba (sección 13) |
+
+**Decisiones del alcance:** la app **no** envía nada a Claude ni automatiza el navegador (el prompt se copia a mano),
+y la demo funciona sin Gemini. Para usar Gemini de verdad hace falta una clave propia (sección 3).
+
+---
+
 Aplicación local para Windows, de un solo usuario. Sirve para:
 
 1. **Registrar tus actividades diarias** (proyecto, actividad, avance, problemas, solución, próximos pasos y evidencias).
@@ -576,8 +615,9 @@ El script:
    - `dist\CoraNotes\` (la carpeta lista para usar, unos 300 MB);
    - `dist\CoraNotes-<versión>-windows-x64.zip` (unos 110 MB) y su `.sha256`.
 
-`build\` y `dist\` no se guardan en Git. Para publicar una versión, subí el zip como *Release* del repositorio
-y cambiá `__version__` en `coranotes\__init__.py` antes de empaquetar.
+`build\` y `dist\` no se guardan en Git. Para publicar una versión: cambiá `__version__` en `coranotes\__init__.py`, hacé commit y creá una etiqueta
+(`git tag v1.0.1` y `git push origin v1.0.1`). GitHub Actions corre las pruebas, arma el zip y lo publica solo
+como *Release* (`.github/workflows/release.yml`).
 
 La versión portable usa los mismos scripts que el código fuente: si existe la carpeta `runtime\`, usan ese Python y
 no crean `.venv`.

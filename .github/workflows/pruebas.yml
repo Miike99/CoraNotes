@@ -1,0 +1,28 @@
+# Pruebas automáticas en Windows (reloj, notificaciones y Gemini simulados: no usan la API).
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      QT_QPA_PLATFORM: offscreen   # la ventana de Cora se prueba sin pantalla
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Instalar dependencias (versiones exactas)
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - name: Ejecutar pruebas
+        run: python -m pytest -q tests
