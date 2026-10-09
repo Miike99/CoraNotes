@@ -8,7 +8,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path, PurePosixPath
 
-from .config import DB_NAME, LEGACY_DB_NAME
+from .config import DB_NAME
 from .records import AppError
 
 LEEME = """Copia de seguridad de CoraNotes
@@ -54,8 +54,7 @@ def list_backups(paths) -> list[dict]:
     if not paths.copias.exists():
         return []
     out = []
-    for f in sorted([*paths.copias.glob("coranotes-copia-*.zip"), *paths.copias.glob("bitacora-copia-*.zip")],
-                    key=lambda f: f.name.split("-copia-")[-1], reverse=True):
+    for f in sorted(paths.copias.glob("coranotes-copia-*.zip"), reverse=True):
         out.append({"nombre": f.name, "tamano": f.stat().st_size, "ruta": str(f)})
     return out
 
@@ -67,7 +66,7 @@ def restore_backup(paths, archive: Path) -> Path:
         raise AppError("No existe el archivo de copia")
     with zipfile.ZipFile(archive) as zf:
         names = zf.namelist()
-        if f"datos/{DB_NAME}" not in names and f"datos/{LEGACY_DB_NAME}" not in names:
+        if f"datos/{DB_NAME}" not in names:
             raise AppError("El zip no parece una copia de CoraNotes")
         for n in names:
             p = PurePosixPath(n)

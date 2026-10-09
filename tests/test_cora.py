@@ -7,10 +7,10 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from bitacora.mascota.logic import PetBrain, clamp_to_area
-from bitacora.pet import MENSAJES
-from bitacora.records import RegistroIn
-from bitacora.web.app import create_app
+from coranotes.mascota.logic import PetBrain, clamp_to_area
+from coranotes.pet import MENSAJES
+from coranotes.records import RegistroIn
+from coranotes.web.app import create_app
 
 from conftest import FAKE_KEY, HOY, enable_gemini, local, registro
 
@@ -130,7 +130,7 @@ def test_borradores_archivos_y_dias_anteriores_no_alimentan(ctx, clock, tmp_path
     (inbox / "vacio.txt").write_text("", encoding="utf-8")
     (inbox / "pendiente.txt").write_text("Algo sin fecha ni proyecto", encoding="utf-8")
     (inbox / "ayer.md").write_text("Fecha: 2026-10-08\nProyecto: P\n\n## Actividad\nAyer\n", encoding="utf-8")
-    from bitacora.demo import tiny_png
+    from coranotes.demo import tiny_png
     (inbox / "captura.png").write_bytes(tiny_png())
     ctx.importer.scan()
     ctx.records.create(registro(estado="borrador", actividad=""))
@@ -236,17 +236,17 @@ def test_api_mascota_token_local_y_sin_secretos(ctx):
     c = TestClient(app, base_url="http://127.0.0.1:8765")
     assert c.post("/api/mascota/sincronizar", json={"visible": True}).status_code == 403
     assert c.post("/api/mascota/sincronizar", json={"visible": True},
-                  headers={"X-Bitacora-Mascota": "otro"}).status_code == 403
-    r = c.post("/api/mascota/sincronizar", json={"visible": True}, headers={"X-Bitacora-Mascota": "token-mascota-prueba"})
+                  headers={"X-CoraNotes-Mascota": "otro"}).status_code == 403
+    r = c.post("/api/mascota/sincronizar", json={"visible": True}, headers={"X-CoraNotes-Mascota": "token-mascota-prueba"})
     assert r.status_code == 200 and FAKE_KEY not in r.text and "api_key" not in r.text.lower()
     assert ctx.pet.presence()["visible"] is True
     r = c.post("/api/mascota/config", json={"tamano": "grande", "posicion_x": 10, "posicion_y": 20, "otra": 1},
-               headers={"X-Bitacora-Mascota": "token-mascota-prueba"})
+               headers={"X-CoraNotes-Mascota": "token-mascota-prueba"})
     assert r.json()["tamano"] == "grande" and "otra" not in r.json()
     assert c.post("/api/mascota/config", json={"tamano": "gigante"},
-                  headers={"X-Bitacora-Mascota": "token-mascota-prueba"}).status_code == 422
+                  headers={"X-CoraNotes-Mascota": "token-mascota-prueba"}).status_code == 422
     # El token de Cora no sirve fuera de /api/mascota/.
-    assert c.post("/api/registros", json={}, headers={"X-Bitacora-Mascota": "token-mascota-prueba"}).status_code == 403
+    assert c.post("/api/registros", json={}, headers={"X-CoraNotes-Mascota": "token-mascota-prueba"}).status_code == 403
     # La web guarda cambios parciales sin pisar la posición.
     token = c.get("/api/sesion").json()["csrf"]
     c.put("/api/config/mascota", json={"sonidos": True}, headers={"X-CSRF-Token": token})
@@ -299,8 +299,8 @@ def test_ventana_qt_offscreen(tmp_path):
     pytest.importorskip("PySide6")
     from PySide6.QtWidgets import QApplication
 
-    from bitacora.config import AppConfig, Paths
-    from bitacora.mascota.app import PetController
+    from coranotes.config import AppConfig, Paths
+    from coranotes.mascota.app import PetController
     app = QApplication.instance() or QApplication([])
     cfg = AppConfig(paths=Paths(tmp_path / "home"), port=1)  # puerto sin servidor: conexión pendiente
     cfg.paths.ensure()

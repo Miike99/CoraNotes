@@ -12,8 +12,6 @@ HOST = "127.0.0.1"  # nunca se escucha en otra interfaz
 APP_NAME = "CoraNotes"
 PET_NAME = "Cora"
 DB_NAME = "coranotes.sqlite3"
-LEGACY_DB_NAME = "bitacora.sqlite3"          # nombre anterior (Bitácora IA)
-LEGACY_HOME_NAMES = {False: "BitacoraIA", True: "BitacoraIA-demo"}
 
 
 def load_dotenv(path: Path) -> None:
@@ -85,34 +83,14 @@ class AppConfig:
 
 
 def env(name: str, default: str = "") -> str:
-    """Lee CORANOTES_<name>; acepta también BITACORA_<name> (nombre anterior de la app)."""
-    value = os.environ.get(f"CORANOTES_{name}", "").strip() or os.environ.get(f"BITACORA_{name}", "").strip()
-    return value or default
+    """Lee la variable de entorno CORANOTES_<name>."""
+    return os.environ.get(f"CORANOTES_{name}", "").strip() or default
 
 
 def default_home(demo: bool) -> Path:
-    r"""%LOCALAPPDATA%\CoraNotes. Si solo existe la carpeta anterior (BitacoraIA), se renombra una vez;
-    si no se puede (por ejemplo, un proceso viejo la tiene abierta), se sigue usando la anterior."""
+    r"""%LOCALAPPDATA%\CoraNotes (o CoraNotes-demo para la demostración)."""
     base = Path(os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local"))
-    new = base / (f"{APP_NAME}-demo" if demo else APP_NAME)
-    legacy = base / LEGACY_HOME_NAMES[demo]
-    if not new.exists() and legacy.is_dir():
-        try:
-            legacy.rename(new)
-        except OSError:
-            return legacy
-    return new
-
-
-def migrate_db_name(paths: "Paths") -> None:
-    """Renombra datos/bitacora.sqlite3 (y sus archivos -wal/-shm) a coranotes.sqlite3 si hace falta."""
-    old = paths.db_dir / LEGACY_DB_NAME
-    if paths.db.exists() or not old.exists():
-        return
-    for suffix in ("", "-wal", "-shm"):
-        src = paths.db_dir / (LEGACY_DB_NAME + suffix)
-        if src.exists():
-            src.rename(paths.db_dir / (DB_NAME + suffix))
+    return base / (f"{APP_NAME}-demo" if demo else APP_NAME)
 
 
 def load_config() -> AppConfig:

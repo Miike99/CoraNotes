@@ -11,5 +11,5 @@ if (-not (Probar-Servidor $puerto)) {
 }
 $pyw = Obtener-Pythonw
 if (-not $pyw) { Write-Host 'No se encontró Python. Ejecutá Iniciar CoraNotes.bat.' -ForegroundColor Red; exit 1 }
-Iniciar-Oculto $pyw '-m bitacora.mascota' | Out-Null
+Iniciar-Oculto $pyw '-m coranotes.mascota' | Out-Null
 Write-Host 'Listo: Cora aparece en el escritorio (si ya estaba abierta, se vuelve a mostrar).' -ForegroundColor Green

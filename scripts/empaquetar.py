@@ -33,7 +33,7 @@ BUILD = ROOT / "build"
 DIST = ROOT / "dist"
 OUT = DIST / "CoraNotes"
 
-COPIAR = ["bitacora", "ejemplos", "README.md", ".env.example",
+COPIAR = ["coranotes", "ejemplos", "README.md", ".env.example",
           "Iniciar CoraNotes.bat", "Detener CoraNotes.bat", "Mostrar Cora.bat",
           "Demo CoraNotes.bat", "Detener Demo.bat", "Reiniciar Demo.bat"]
 SCRIPTS = ["_comun.ps1", "iniciar.ps1", "detener.ps1", "mascota.ps1", "reiniciar_demo.ps1",
@@ -64,7 +64,7 @@ def log(msg: str) -> None:
 
 def version_app() -> str:
     ns: dict = {}
-    exec((ROOT / "bitacora" / "__init__.py").read_text(encoding="utf-8"), ns)
+    exec((ROOT / "coranotes" / "__init__.py").read_text(encoding="utf-8"), ns)
     return ns["__version__"]
 
 
@@ -100,7 +100,7 @@ def preparar_runtime(zip_python: Path) -> Path:
     with zipfile.ZipFile(zip_python) as zf:
         zf.extractall(runtime)
     verificar_firma(runtime / "python.exe")
-    # ._pth: rutas de importación del Python embebido. «..» es la carpeta de la app (paquete bitacora).
+    # ._pth: rutas de importación del Python embebido. «..» es la carpeta de la app (paquete coranotes).
     (runtime / f"python{PY_TAG}._pth").write_text(
         f"python{PY_TAG}.zip\n.\nLib\\site-packages\n..\nimport site\n", encoding="ascii")
     return runtime
@@ -161,7 +161,7 @@ def precompilar(runtime: Path) -> None:
     """Genera los .pyc con el mismo Python incluido: el primer inicio es mucho más rápido."""
     log("Precompilando (.pyc)…")
     subprocess.run([str(runtime / "python.exe"), "-m", "compileall", "-q", "-j", "0", "--invalidation-mode", "checked-hash",
-                    str(runtime / "Lib" / "site-packages"), str(OUT / "bitacora")],
+                    str(runtime / "Lib" / "site-packages"), str(OUT / "coranotes")],
                    cwd=str(BUILD), check=True, capture_output=True)
 
 
@@ -170,7 +170,7 @@ def prueba_humo(runtime: Path) -> None:
     codigo = ("import fastapi, uvicorn, google.genai, watchdog, pypdf, docx, multipart, tzdata, sqlite3, winsound;"
               "import os; os.environ['QT_QPA_PLATFORM']='offscreen';"
               "from PySide6.QtWidgets import QApplication; app = QApplication([]);"
-              "import bitacora.web.app, bitacora.mascota.app, bitacora.context;"
+              "import coranotes.web.app, coranotes.mascota.app, coranotes.context;"
               "import sys; print('ok', sys.version.split()[0], sys.executable)")
     r = subprocess.run([str(runtime / "python.exe"), "-c", codigo], cwd=str(BUILD), capture_output=True, text=True)
     if r.returncode != 0 or not r.stdout.startswith("ok"):

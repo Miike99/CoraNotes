@@ -8,16 +8,16 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
-from bitacora.ai.providers import AIError, ProviderResult, build_user_text
-from bitacora.ai.schema import validate_summary
-from bitacora.ai.sources import collect_sources
-from bitacora.ai.template_summary import build_template_summary
-from bitacora.importer import validate_inbox_folder
-from bitacora.instance import AlreadyRunning, InstanceLock
-from bitacora.notifier import RecordingNotifier
-from bitacora.records import AppError, RegistroIn
-from bitacora.scheduler import REMINDER_TEXT
-from bitacora.web.app import create_app
+from coranotes.ai.providers import AIError, ProviderResult, build_user_text
+from coranotes.ai.schema import validate_summary
+from coranotes.ai.sources import collect_sources
+from coranotes.ai.template_summary import build_template_summary
+from coranotes.importer import validate_inbox_folder
+from coranotes.instance import AlreadyRunning, InstanceLock
+from coranotes.notifier import RecordingNotifier
+from coranotes.records import AppError, RegistroIn
+from coranotes.scheduler import REMINDER_TEXT
+from coranotes.web.app import create_app
 
 from conftest import FAKE_KEY, HOY, drain, enable_gemini, local, registro
 
@@ -91,7 +91,7 @@ def test_2_archivos_no_cancelan_aviso_pero_sin_actividad_si(ctx, clock, tmp_path
                                    encoding="utf-8")
     (inbox / "vacio.txt").write_text("", encoding="utf-8")
     (inbox / "sin_clasificar.txt").write_text("Nota suelta sin fecha ni proyecto", encoding="utf-8")
-    (inbox / "foto.png").write_bytes(__import__("bitacora.demo", fromlist=["tiny_png"]).tiny_png())
+    (inbox / "foto.png").write_bytes(__import__("coranotes.demo", fromlist=["tiny_png"]).tiny_png())
     ctx.importer.scan()
     estados = {d["nombre"]: d["estado"] for d in ctx.importer.list()}
     assert estados == {"ayer.md": "importado", "vacio.txt": "error",
@@ -170,7 +170,7 @@ def test_4_cambios_de_configuracion_afectan_ejecuciones(ctx, clock):
     ctx.scheduler.tick()
     assert len(notifs(ctx)) == 1
 
-    from bitacora.calendar_logic import next_runs
+    from coranotes.calendar_logic import next_runs
     proximas = next_runs(ctx.settings.get("recordatorio"), ctx.settings.get("presentacion"), clock.now())
     fechas = [p["fecha"] for p in proximas if p["tipo"] == "recordatorio"]
     assert martes.isoformat() not in fechas and lunes.isoformat() not in fechas
@@ -401,8 +401,8 @@ def test_10_seguridad_http(ctx, client):
     assert client.post("/api/registros", json=body, headers={"Origin": "http://evil.example"}).status_code == 403
     malo = TestClient(client.app, base_url="http://evil.example:8765")
     assert malo.get("/api/estado").status_code == 400
-    assert client.get("/api/evidencias/..%2F..%2Fdatos%2Fbitacora.sqlite3/archivo").status_code == 404
-    assert client.get("/api/evidencias/../../datos/bitacora.sqlite3/archivo").status_code == 404
+    assert client.get("/api/evidencias/..%2F..%2Fdatos%2Fcoranotes.sqlite3/archivo").status_code == 404
+    assert client.get("/api/evidencias/../../datos/coranotes.sqlite3/archivo").status_code == 404
     r = client.post("/api/registros", json={**body, "actividad": "x" * 10_001})
     assert r.status_code == 422
     html = client.get("/").text
@@ -413,7 +413,7 @@ def test_10_seguridad_http(ctx, client):
 
     r = client.post("/api/evidencias", files={"archivo": ("falsa.png", b"MZ\x90\x00 no es png", "image/png")})
     assert r.status_code == 400
-    assert "innerHTML" not in open(__import__("bitacora.web.app", fromlist=["STATIC"]).STATIC / "app.js",
+    assert "innerHTML" not in open(__import__("coranotes.web.app", fromlist=["STATIC"]).STATIC / "app.js",
                                    encoding="utf-8").read()
 
 
@@ -531,7 +531,7 @@ def test_flujo_api_basico_y_markdown(client, ctx):
 
 
 def test_copia_de_seguridad_y_restauracion(ctx, tmp_path):
-    from bitacora.backup import create_backup, restore_backup
+    from coranotes.backup import create_backup, restore_backup
     ctx.records.create(registro())
     zip_path = create_backup(ctx.config.paths, ctx.clock.now())
     import zipfile
@@ -544,7 +544,7 @@ def test_copia_de_seguridad_y_restauracion(ctx, tmp_path):
 def test_demo_carga_datos_ficticios(make_ctx, clock):
     ctx = make_ctx()
     ctx.config.demo = True
-    from bitacora.demo import load_demo
+    from coranotes.demo import load_demo
     res = load_demo(ctx)
     assert len(res["registros"]) == 5
     assert ctx.records.day_status(HOY)["registrado"] is False  # hay un borrador, no cuenta
@@ -573,49 +573,9 @@ def test_10d_junction_rechazada(ctx, tmp_path):
 
 def test_demo_no_se_carga_dos_veces(make_ctx):
     ctx = make_ctx()
-    from bitacora.demo import load_demo
+    from coranotes.demo import load_demo
     load_demo(ctx)
     with pytest.raises(AppError):
         load_demo(ctx)
     assert len([r for r in ctx.records.list() if r["origen"] == "demo"]) == 6
 
-
-# Cambio de nombre (Bitácora IA -> CoraNotes) ------------------------------------
-def test_migracion_desde_bitacora_ia(tmp_path, monkeypatch):
-    from bitacora import config as cfgmod
-    local = tmp_path / "LocalAppData"
-    vieja = local / "BitacoraIA" / "datos"
-    vieja.mkdir(parents=True)
-    import sqlite3
-    con = sqlite3.connect(vieja / "bitacora.sqlite3")
-    con.execute("CREATE TABLE prueba(x)")
-    con.execute("INSERT INTO prueba VALUES (42)")
-    con.commit()
-    con.close()
-    monkeypatch.setenv("LOCALAPPDATA", str(local))
-    for k in ("CORANOTES_HOME", "BITACORA_HOME", "CORANOTES_DEMO", "BITACORA_DEMO", "CORANOTES_PORT"):
-        monkeypatch.delenv(k, raising=False)
-    monkeypatch.setenv("BITACORA_PORT", "8799")              # variable vieja: sigue funcionando
-    c = cfgmod.load_config()
-    assert c.paths.home.name == "CoraNotes" and not (local / "BitacoraIA").exists()
-    assert c.port == 8799
-    cfgmod.migrate_db_name(c.paths)
-    assert c.paths.db.name == "coranotes.sqlite3" and c.paths.db.exists()
-    assert sqlite3.connect(c.paths.db).execute("SELECT x FROM prueba").fetchone()[0] == 42
-    monkeypatch.setenv("CORANOTES_PORT", "8800")             # la nueva tiene prioridad
-    assert cfgmod.load_config().port == 8800
-
-
-def test_restaurar_copia_hecha_con_el_nombre_anterior(make_ctx, tmp_path):
-    import zipfile
-    from bitacora.backup import restore_backup
-    from bitacora.config import migrate_db_name
-    ctx = make_ctx()
-    ctx.records.create(registro(actividad="Dato de la copia vieja"))
-    vieja = tmp_path / "bitacora-copia-20261001-120000.zip"
-    with zipfile.ZipFile(vieja, "w") as zf:
-        zf.write(ctx.config.paths.db, "datos/bitacora.sqlite3")
-    restore_backup(ctx.config.paths, vieja)
-    migrate_db_name(ctx.config.paths)
-    otro = make_ctx()
-    assert [r["actividad"] for r in otro.records.list()] == ["Dato de la copia vieja"]

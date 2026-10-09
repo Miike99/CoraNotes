@@ -16,7 +16,7 @@ from .records import AppError, Conflict, NotFound
 from .secrets_guard import redact
 from .util import atomic_write_text, clean_text, new_id, sha256_text, utc_iso
 
-log = logging.getLogger("bitacora.prompts")
+log = logging.getLogger("coranotes.prompts")
 
 TIPOS = {"auto": "Borrador automático", "manual": "Mi versión editada", "cierre": "Instantánea de cierre"}
 MAX_PROMPT = 200_000

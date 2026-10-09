@@ -17,7 +17,7 @@ from xml.sax.saxutils import escape, quoteattr
 from .db import rows
 from .util import utc_iso
 
-log = logging.getLogger("bitacora.avisos")
+log = logging.getLogger("coranotes.avisos")
 
 POWERSHELL_AUMID = r"{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
 

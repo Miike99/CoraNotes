@@ -261,7 +261,7 @@ async function vistaRegistro(vista, p) {
   const id = p.get('id');
   const proy = await api('GET', '/api/proyectos');
   let rec = id ? await api('GET', `/api/registros/${encodeURIComponent(id)}`) : null;
-  const claveLocal = `bitacora-form-${id || 'nuevo'}`;
+  const claveLocal = `coranotes-form-${id || 'nuevo'}`;
   const guardado = leerLocal(claveLocal);
   const base = rec ? { ...rec, tarea_titulo: rec.tarea_titulo || '' } : { fecha: p.get('fecha') || hoyISO(), proyecto: '', tarea_titulo: '', tipo_avance: 'en_curso', estado_problema: 'sin_problema', incluir_ia: true };
   const datos = guardado && (!rec || guardado._revision === rec.revision) ? { ...base, ...guardado } : base;
@@ -485,8 +485,8 @@ async function vistaPrompt(vista, p) {
 
   const mi = d.mi_version;
   const area = h('textarea', { class: 'grande', value: mi ? mi.contenido : (borr ? borr.contenido : '') });
-  area.addEventListener('input', () => { estado.sucio = true; guardarLocal(`bitacora-prompt-${per.clave}`, area.value); });
-  const local = leerLocal(`bitacora-prompt-${per.clave}`);
+  area.addEventListener('input', () => { estado.sucio = true; guardarLocal(`coranotes-prompt-${per.clave}`, area.value); });
+  const local = leerLocal(`coranotes-prompt-${per.clave}`);
   if (local && local !== area.value) { area.value = local; }
   const pMi = h('div', { class: 'panel' }, h('h2', { text: 'Mi versión editada' }),
     mi ? h('p', { class: 'meta', text: `${mi.id} · ${momento(mi.creado_utc)} · ${mi.nota}` }) : h('p', { class: 'meta', text: 'Aún no editaste una versión propia. Tus ediciones nunca se sobrescriben con borradores nuevos.' }),
@@ -496,11 +496,11 @@ async function vistaPrompt(vista, p) {
     h('div', { class: 'acciones' },
       h('button', { type: 'button', class: 'primario', disabled: !borr, text: 'Guardar mi versión', onclick: async () => {
         const r = await accion(() => api('POST', '/api/prompt/manual', { periodo: per.clave, contenido: area.value, base_version_id: borr ? borr.id : null }), 'Tu versión quedó guardada (la anterior se conserva).');
-        if (r) { borrarLocal(`bitacora-prompt-${per.clave}`); estado.sucio = false; navegar(); } } }),
+        if (r) { borrarLocal(`coranotes-prompt-${per.clave}`); estado.sucio = false; navegar(); } } }),
       borr && mi ? h('button', { type: 'button', text: 'Reemplazar mi versión por el borrador', onclick: async () => {
         if (!confirm('Tu versión actual queda en el historial. ¿Reemplazarla por el borrador automático?')) return;
         const r = await accion(() => api('POST', `/api/prompt/versiones/${borr.id}/recuperar`), 'Reemplazada. Podés recuperar la anterior desde Versiones.');
-        if (r) { borrarLocal(`bitacora-prompt-${per.clave}`); estado.sucio = false; navegar(); } } }) : null,
+        if (r) { borrarLocal(`coranotes-prompt-${per.clave}`); estado.sucio = false; navegar(); } } }) : null,
       h('button', { type: 'button', text: 'Copiar', onclick: () => copiar(area.value) }), enlaceClaude()));
 
   const pCierres = h('div', { class: 'panel' }, h('h2', { text: 'Instantáneas «Preparar para Claude» y cierres' }));

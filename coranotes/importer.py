@@ -18,7 +18,7 @@ from .db import rows
 from .records import AppError, Conflict, NotFound, RegistroIn, InvalidData
 from .util import clean_text, new_id, normalize_key, sha256_bytes, utc_iso
 
-log = logging.getLogger("bitacora.importacion")
+log = logging.getLogger("coranotes.importacion")
 
 TEXT_EXT = {".txt", ".md", ".json"}
 DOC_EXT = {".docx", ".pdf"}

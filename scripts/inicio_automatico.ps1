@@ -6,8 +6,6 @@ param([switch]$Activar, [switch]$Desactivar)
 
 $inicio = [Environment]::GetFolderPath('Startup')
 $acceso = Join-Path $inicio 'CoraNotes.lnk'
-$anterior = Join-Path $inicio 'Bitacora IA.lnk'   # nombre anterior de la app
-if (Test-Path $anterior) { Remove-Item $anterior }
 if ($Activar) {
     $shell = New-Object -ComObject WScript.Shell
     $lnk = $shell.CreateShortcut($acceso)

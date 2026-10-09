@@ -16,7 +16,7 @@ from .db import get_meta, rows
 from .records import AppError, Conflict, NotFound, is_day_registered
 from .util import parse_utc, utc_iso
 
-log = logging.getLogger("bitacora.programador")
+log = logging.getLogger("coranotes.programador")
 
 GRACE = timedelta(minutes=30)   # si se detecta más tarde, se agrupa como "perdido"
 LOOKBACK_DAYS = 7

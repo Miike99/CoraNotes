@@ -17,10 +17,8 @@ function Leer-Env([string]$Clave) {
 }
 
 function Leer-EnvApp([string]$Nombre) {
-    # CORANOTES_<Nombre>; se acepta también BITACORA_<Nombre> (nombre anterior de la app).
-    $v = Leer-Env "CORANOTES_$Nombre"
-    if ($v) { return $v }
-    return (Leer-Env "BITACORA_$Nombre")
+    # Variables de la app: CORANOTES_<Nombre> (entorno o .env).
+    return (Leer-Env "CORANOTES_$Nombre")
 }
 
 function Obtener-Puerto([switch]$Demo) {
@@ -31,13 +29,10 @@ function Obtener-Puerto([switch]$Demo) {
 }
 
 function Obtener-CarpetaDatos([switch]$Demo) {
-    # Igual que la app: %LOCALAPPDATA%\CoraNotes; si todavía no se migró, la carpeta anterior (BitacoraIA).
+    # Igual que la app: %LOCALAPPDATA%\CoraNotes (o CoraNotes-demo).
     $h = if ($Demo) { Leer-EnvApp 'HOME_DEMO' } else { Leer-EnvApp 'HOME' }
     if ($h) { return $h }
-    $nueva = Join-Path $env:LOCALAPPDATA $(if ($Demo) { 'CoraNotes-demo' } else { 'CoraNotes' })
-    $vieja = Join-Path $env:LOCALAPPDATA $(if ($Demo) { 'BitacoraIA-demo' } else { 'BitacoraIA' })
-    if (-not (Test-Path $nueva) -and (Test-Path $vieja)) { return $vieja }
-    return $nueva
+    return (Join-Path $env:LOCALAPPDATA $(if ($Demo) { 'CoraNotes-demo' } else { 'CoraNotes' }))
 }
 
 function Fijar-Modo([switch]$Demo, [int]$Puerto) {
@@ -48,7 +43,6 @@ function Fijar-Modo([switch]$Demo, [int]$Puerto) {
     } else {
         Remove-Item Env:CORANOTES_DEMO -ErrorAction SilentlyContinue
     }
-    Remove-Item Env:BITACORA_DEMO -ErrorAction SilentlyContinue
 }
 
 function Probar-Servidor([int]$Puerto) {

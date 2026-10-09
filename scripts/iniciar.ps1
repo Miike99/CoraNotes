@@ -14,7 +14,7 @@ function Iniciar-Mascota {
     # Proceso aparte (sin consola). Si Cora ya está abierta, el nuevo proceso solo le pide que se muestre y termina.
     if ($SinMascota) { return }
     $pyw = Obtener-Pythonw
-    if ($pyw) { Iniciar-Oculto $pyw '-m bitacora.mascota' | Out-Null }
+    if ($pyw) { Iniciar-Oculto $pyw '-m coranotes.mascota' | Out-Null }
 }
 
 if (Probar-Servidor $puerto) {
@@ -30,7 +30,7 @@ if (-not $py) { exit 1 }
 # Un log por puerto: dos instancias (por ejemplo normal y demo) nunca compiten por el mismo archivo.
 $log = Join-Path $env:TEMP "coranotes-arranque-$puerto.log"
 Write-Host "Iniciando CoraNotes$(if ($Demo) { ' (MODO DEMO)' })..."
-$proc = Iniciar-Oculto $env:ComSpec "/s /c `"`"$py`" -m bitacora > `"$log`" 2> `"$log.err`"`""
+$proc = Iniciar-Oculto $env:ComSpec "/s /c `"`"$py`" -m coranotes > `"$log`" 2> `"$log.err`"`""
 
 # El primer inicio después de descomprimir puede tardar (Windows analiza los archivos nuevos).
 for ($i = 0; $i -lt 180; $i++) {

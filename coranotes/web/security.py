@@ -15,11 +15,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-COOKIE = "bitacora_sesion"
+COOKIE = "coranotes_sesion"
 CSRF_HEADER = "x-csrf-token"
 STOP_PATH = "/api/sistema/detener"
-STOP_HEADER = "x-bitacora-detener"
-PET_HEADER = "x-bitacora-mascota"
+STOP_HEADER = "x-coranotes-detener"
+PET_HEADER = "x-coranotes-mascota"
 PET_PREFIX = "/api/mascota/"
 
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; "

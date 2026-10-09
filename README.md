@@ -8,10 +8,6 @@ Aplicación local para Windows, de un solo usuario. Sirve para:
 3. **Preparar un prompt semanal** para que lo pegues en Claude, donde ya tenés tu diseño de presentaciones.
    El resumen lo arma Gemini o una plantilla sin IA.
 
-> **Nombre anterior:** la app se llamaba «Bitácora IA». Si ya la usabas, tus datos se migran solos la primera vez
-> que inicies CoraNotes (`%LOCALAPPDATA%\BitacoraIA` → `%LOCALAPPDATA%\CoraNotes`) y las variables viejas
-> `BITACORA_*` del `.env` siguen funcionando.
-
 > **Qué NO hace:** no envía nada a Claude, no automatiza el navegador, no guarda credenciales de Claude y no genera
 > la presentación. El último paso (pegar el prompt en Claude y revisar la presentación) lo hacés vos.
 
@@ -512,7 +508,7 @@ protección equivalente con *junction* sí se prueba.
 IA Day\
 ├─ Iniciar CoraNotes.bat · Detener CoraNotes.bat · Demo CoraNotes.bat · Detener Demo.bat · Reiniciar Demo.bat · Mostrar Cora.bat
 ├─ .env.example · .gitignore · requirements.txt (versiones exactas) · requirements.in · requirements-dev.txt
-├─ bitacora\              código
+├─ coranotes\              código
 │  ├─ __main__.py         arranque (uvicorn en 127.0.0.1, 1 worker, sin reload)
 │  ├─ context.py          arma servicios e hilos de fondo
 │  ├─ db.py · settings.py · records.py · calendar_logic.py · scheduler.py
@@ -551,7 +547,7 @@ El script:
    - `dist\CoraNotes-<versión>-windows-x64.zip` (unos 110 MB) y su `.sha256`.
 
 `build\` y `dist\` no se guardan en Git. Para publicar una versión, subí el zip como *Release* del repositorio
-y cambiá `__version__` en `bitacora\__init__.py` antes de empaquetar.
+y cambiá `__version__` en `coranotes\__init__.py` antes de empaquetar.
 
 La versión portable usa los mismos scripts que el código fuente: si existe la carpeta `runtime\`, usan ese Python y
 no crean `.venv`.

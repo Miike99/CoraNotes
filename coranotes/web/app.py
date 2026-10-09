@@ -25,7 +25,7 @@ from ..settings import SettingsError
 from ..util import safe_filename, utc_iso
 from .security import COOKIE, SecurityMiddleware, SessionStore
 
-log = logging.getLogger("bitacora.web")
+log = logging.getLogger("coranotes.web")
 STATIC = Path(__file__).parent / "static"
 
 

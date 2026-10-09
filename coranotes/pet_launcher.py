@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .config import PROJECT_DIR
 
-log = logging.getLogger("bitacora.mascota")
+log = logging.getLogger("coranotes.mascota")
 
 
 def pyside_available() -> bool:
@@ -22,7 +22,7 @@ def spawn_pet() -> tuple[bool, str]:
         return False, "Falta PySide6: ejecutá scripts\\iniciar.ps1 para instalar las dependencias."
     exe = Path(sys.executable)
     pyw = exe.with_name("pythonw.exe")
-    cmd = [str(pyw if pyw.exists() else exe), "-m", "bitacora.mascota"]
+    cmd = [str(pyw if pyw.exists() else exe), "-m", "coranotes.mascota"]
     flags = 0
     if sys.platform == "win32":
         flags = subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP

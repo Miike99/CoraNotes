@@ -7,7 +7,7 @@ import threading
 import time
 from pathlib import Path
 
-log = logging.getLogger("bitacora.carpeta")
+log = logging.getLogger("coranotes.carpeta")
 
 STABLE_SECONDS = 2.0      # el archivo no cambió de tamaño/fecha durante este tiempo
 GIVE_UP_SECONDS = 180.0   # si sigue bloqueado (en uso) se informa como error

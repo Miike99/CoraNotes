@@ -17,7 +17,7 @@ from .drawing import BASE_H, BASE_W, ESCALAS, GATO_RECT, GLOBO_RECT, PLATO_RECT,
 from .logic import PetBrain, clamp_to_area
 from .sound import SoundPlayer
 
-log = logging.getLogger("bitacora.mascota")
+log = logging.getLogger("coranotes.mascota")
 DRAG_THRESHOLD = 6
 FAST_MS, IDLE_MS, REDUCED_MS = 50, 140, 500
 

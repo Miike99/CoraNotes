@@ -13,7 +13,7 @@ from .providers import AIError, GeminiProvider, SimulatedProvider, TemplateProvi
 from .schema import InvalidAIResponse, validate_summary
 from .sources import collect_sources, data_hash, input_hash
 
-log = logging.getLogger("bitacora.ia")
+log = logging.getLogger("coranotes.ia")
 
 BACKOFF = [30, 120, 300, 600, 900]
 GEMINI_RESET_TZ = ZoneInfo("America/Los_Angeles")  # las cuotas diarias se reinician a medianoche del Pacífico

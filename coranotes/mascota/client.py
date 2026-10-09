@@ -15,7 +15,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
-log = logging.getLogger("bitacora.mascota")
+log = logging.getLogger("coranotes.mascota")
 SYNC_SECONDS = 3.0
 SYNC_SECONDS_OFFLINE = 5.0
 
@@ -74,9 +74,9 @@ class Backend(QObject):
         req = urllib.request.Request(self.base + path, data=data, method=method)
         req.add_header("Content-Type", "application/json")
         if stop_token:
-            req.add_header("X-Bitacora-Detener", self._token("detener.token"))
+            req.add_header("X-CoraNotes-Detener", self._token("detener.token"))
         else:
-            req.add_header("X-Bitacora-Mascota", self._token("mascota.token"))
+            req.add_header("X-CoraNotes-Mascota", self._token("mascota.token"))
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - siempre 127.0.0.1
             return json.loads(resp.read().decode("utf-8") or "{}")
 

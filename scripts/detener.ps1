@@ -6,7 +6,7 @@ param([switch]$Demo)
 $puerto = Obtener-Puerto -Demo:$Demo
 $run = Join-Path (Obtener-CarpetaDatos -Demo:$Demo) 'run'
 $tokenArchivo = Join-Path $run 'detener.token'
-$pidArchivo = Join-Path $run 'bitacora.pid'
+$pidArchivo = Join-Path $run 'coranotes.pid'
 
 # Cora también se cierra al detener toda la app (pedido ordenado y, si no responde, se finaliza).
 $pidMascota = Join-Path $run 'mascota.pid'
@@ -31,7 +31,7 @@ if (Test-Path $tokenArchivo) {
     $token = (Get-Content $tokenArchivo -Raw).Trim()
     try {
         Invoke-WebRequest -UseBasicParsing -Method Post -Uri "http://127.0.0.1:$puerto/api/sistema/detener" `
-            -Headers @{ 'X-Bitacora-Detener' = $token } -TimeoutSec 5 | Out-Null
+            -Headers @{ 'X-CoraNotes-Detener' = $token } -TimeoutSec 5 | Out-Null
     } catch { }
 }
 for ($i = 0; $i -lt 20; $i++) {

@@ -10,13 +10,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bitacora.ai.providers import ProviderResult, SimulatedProvider, TemplateProvider  # noqa: E402
-from bitacora.ai.template_summary import build_template_summary  # noqa: E402
-from bitacora.clock import FakeClock  # noqa: E402
-from bitacora.config import AppConfig, Paths  # noqa: E402
-from bitacora.context import AppContext  # noqa: E402
-from bitacora.notifier import RecordingNotifier  # noqa: E402
-from bitacora.records import RegistroIn  # noqa: E402
+from coranotes.ai.providers import ProviderResult, SimulatedProvider, TemplateProvider  # noqa: E402
+from coranotes.ai.template_summary import build_template_summary  # noqa: E402
+from coranotes.clock import FakeClock  # noqa: E402
+from coranotes.config import AppConfig, Paths  # noqa: E402
+from coranotes.context import AppContext  # noqa: E402
+from coranotes.notifier import RecordingNotifier  # noqa: E402
+from coranotes.records import RegistroIn  # noqa: E402
 
 TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 HOY = date(2026, 10, 9)  # viernes

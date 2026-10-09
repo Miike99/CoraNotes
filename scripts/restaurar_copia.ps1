@@ -11,4 +11,4 @@ Fijar-Modo -Demo:$Demo -Puerto (Obtener-Puerto -Demo:$Demo)
 $py = Preparar-Entorno
 if (-not $py) { exit 1 }
 Push-Location $Proyecto
-try { & $py -m bitacora restaurar $Archivo; exit $LASTEXITCODE } finally { Pop-Location }
+try { & $py -m coranotes restaurar $Archivo; exit $LASTEXITCODE } finally { Pop-Location }

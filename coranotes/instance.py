@@ -12,10 +12,10 @@ class AlreadyRunning(Exception):
 
 
 class InstanceLock:
-    def __init__(self, run_dir: Path, nombre: str = "bitacora"):
+    def __init__(self, run_dir: Path, nombre: str = "coranotes"):
         self.run_dir = run_dir
         self.nombre = nombre
-        principal = nombre == "bitacora"
+        principal = nombre == "coranotes"
         self.lock_path = run_dir / ("instancia.lock" if principal else f"{nombre}.lock")
         self.pid_path = run_dir / f"{nombre}.pid"
         # Tokens locales (solo los escribe el backend): detener la app y autenticar a Cora.

@@ -1,4 +1,4 @@
-"""Arranque de Cora: `python -m bitacora.mascota` (lo inicia scripts\\iniciar.ps1)."""
+"""Arranque de Cora: `python -m coranotes.mascota` (lo inicia scripts\\iniciar.ps1)."""
 from __future__ import annotations
 
 import json
@@ -13,7 +13,7 @@ def _ask_existing_to_show(config) -> None:
     try:
         token = (config.paths.run / "mascota.token").read_text(encoding="ascii").strip()
         req = urllib.request.Request(f"{config.base_url}/api/mascota/mostrar", data=b"{}", method="POST",
-                                     headers={"Content-Type": "application/json", "X-Bitacora-Mascota": token})
+                                     headers={"Content-Type": "application/json", "X-CoraNotes-Mascota": token})
         urllib.request.urlopen(req, timeout=3).read()  # noqa: S310 - 127.0.0.1
     except Exception:  # noqa: BLE001
         pass
@@ -31,7 +31,7 @@ def main() -> int:
     handler.addFilter(RedactingFilter())
     logging.getLogger().handlers[:] = [handler]
     logging.getLogger().setLevel(logging.INFO)
-    log = logging.getLogger("bitacora.mascota")
+    log = logging.getLogger("coranotes.mascota")
 
     lock = InstanceLock(config.paths.run, nombre="mascota")
     try:

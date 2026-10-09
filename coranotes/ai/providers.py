@@ -13,7 +13,7 @@ from ..secrets_guard import redact
 from .schema import response_json_schema
 from .template_summary import build_template_summary
 
-log = logging.getLogger("bitacora.ia")
+log = logging.getLogger("coranotes.ia")
 
 SYSTEM_INSTRUCTION = """Sos un asistente que resume registros de trabajo para preparar una presentación semanal.
 Reglas obligatorias:

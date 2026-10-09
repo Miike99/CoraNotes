@@ -6,7 +6,7 @@ import threading
 
 from .ai.service import AIService
 from .clock import Clock
-from .config import PROJECT_DIR, AppConfig, migrate_db_name
+from .config import PROJECT_DIR, AppConfig
 from .db import Database, get_meta, set_meta
 from .evidence import EvidenceService
 from .importer import Importer
@@ -20,14 +20,13 @@ from .settings import SettingsStore
 from .util import utc_iso
 from .watcher import InboxWatcher
 
-log = logging.getLogger("bitacora")
+log = logging.getLogger("coranotes")
 
 
 class AppContext:
     def __init__(self, config: AppConfig, clock: Clock | None = None, notifier=None, provider_factory=None):
         self.config = config
         config.paths.ensure()
-        migrate_db_name(config.paths)  # datos/bitacora.sqlite3 -> datos/coranotes.sqlite3 (nombre anterior)
         register_secret(config.gemini_api_key)
         self.clock = clock or Clock()
         self.db = Database(config.paths.db)
@@ -79,7 +78,7 @@ class AppContext:
         for name, interval, fn in (("programador", self.config.tick_seconds, self.scheduler.tick),
                                    ("ia", 3.0, self._ai_step),
                                    ("carpeta", 1.0, self.watcher.step)):
-            t = threading.Thread(target=self._loop, args=(name, interval, fn), name=f"bitacora-{name}", daemon=True)
+            t = threading.Thread(target=self._loop, args=(name, interval, fn), name=f"coranotes-{name}", daemon=True)
             t.start()
             self._threads.append(t)
 

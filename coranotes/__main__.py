@@ -1,4 +1,4 @@
-"""Punto de entrada: `python -m bitacora` (servidor) o `python -m bitacora restaurar <zip>`."""
+"""Punto de entrada: `python -m coranotes` (servidor) o `python -m coranotes restaurar <zip>`."""
 from __future__ import annotations
 
 import logging
@@ -30,13 +30,13 @@ def main(argv: list[str]) -> int:
     config = load_config()
     config.paths.ensure()
     setup_logging(config.paths)
-    log = logging.getLogger("bitacora")
+    log = logging.getLogger("coranotes")
 
     if argv and argv[0] == "restaurar":
         from .backup import restore_backup
         from .instance import AlreadyRunning, InstanceLock
         if len(argv) < 2:
-            print("Uso: python -m bitacora restaurar <archivo.zip>")
+            print("Uso: python -m coranotes restaurar <archivo.zip>")
             return 2
         lock = InstanceLock(config.paths.run)
         try:
