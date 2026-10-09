@@ -1,7 +1,7 @@
 # CoraNotes
 
-[![Pruebas](https://github.com/USUARIO_GITHUB/CoraNotes/actions/workflows/pruebas.yml/badge.svg)](https://github.com/USUARIO_GITHUB/CoraNotes/actions/workflows/pruebas.yml)
-[![Release](https://img.shields.io/github/v/release/USUARIO_GITHUB/CoraNotes?label=descargar)](https://github.com/USUARIO_GITHUB/CoraNotes/releases/latest)
+[![Pruebas](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml/badge.svg)](https://github.com/Miike99/CoraNotes/actions/workflows/pruebas.yml)
+[![Release](https://img.shields.io/github/v/release/Miike99/CoraNotes?label=descargar)](https://github.com/Miike99/CoraNotes/releases/latest)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-green)](LICENSE)
 
 ![Cora, la mascota de escritorio de CoraNotes](docs/img/cora-estados.png)
@@ -10,7 +10,7 @@
 
 **Probarlo en 3 minutos (Windows 10/11, sin instalar nada, sin internet ni clave de Gemini):**
 
-1. Descargá el zip de la [última versión](https://github.com/USUARIO_GITHUB/CoraNotes/releases/latest) (Assets →
+1. Descargá el zip de la [última versión](https://github.com/Miike99/CoraNotes/releases/latest) (Assets →
    `CoraNotes-…-windows-x64.zip`). Antes de descomprimir: clic derecho → Propiedades → **Desbloquear**.
 2. Descomprimilo y hacé doble clic en **`Demo CoraNotes.bat`**. Se abre el navegador y aparece Cora en el escritorio.
 3. En Inicio presioná **Cargar datos ficticios** (un proyecto de VR industrial inventado). A los **2 minutos** Cora pide
