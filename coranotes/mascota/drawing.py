@@ -20,6 +20,7 @@ GLOBO_W, GLOBO_H = 236, 80             # globo en píxeles (no se escala)
 ESCALAS = {"chico": 0.6, "mediano": 0.8, "grande": 1.0}
 SUELO = {"sentada": 200.0, "ventana": 150.0, "panza": 198.0}   # línea de apoyo de cada pose (lógica)
 GATO_RECT = QRectF(28, 16, 150, 186)   # zona para acariciar (lógica, pose sentada)
+VENTANA_X = (26.0, 214.0)  # dónde está dibujada la gata acostada sobre una ventana (x lógica)
 PLATO_RECT = QRectF(166, 160, 70, 46)  # zona del plato (lógica)
 
 # ---------------------------------------------------------------- paleta (de la ilustración de referencia)

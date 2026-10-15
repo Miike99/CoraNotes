@@ -336,11 +336,14 @@ def test_posicion_arriba_de_una_ventana_y_sobre_la_barra():
     from coranotes.mascota.lugares import Rect, perch_position, taskbar_position
     area = Rect(0, 0, 1920, 1040)
     ventana = Rect(300, 400, 1300, 900)
-    x, y = perch_position(ventana, area, 236, 286, 230, prefer_x=1000)
+    contenido = (26, 214)                           # dónde está dibujada la gata dentro de su ventana
+    x, y = perch_position(ventana, area, 236, 286, 230, prefer_x=5000, content=contenido)
     assert y + 230 == ventana.top                  # la línea de apoyo queda sobre el borde de la ventana
-    assert ventana.left - 236 // 5 <= x <= ventana.right - (236 * 4) // 5
+    assert x + 214 <= ventana.right - 150          # entera sobre la ventana y lejos de minimizar/maximizar/cerrar
+    x, _ = perch_position(ventana, area, 236, 286, 230, prefer_x=-500, content=contenido)
+    assert x + 26 >= ventana.left                   # no se sale por la izquierda
     assert perch_position(Rect(0, 0, 1920, 1040), area, 236, 286, 230) is None   # pegada arriba: no entra
-    assert perch_position(Rect(300, 400, 400, 900), area, 236, 286, 230) is None  # ventana muy angosta
+    assert perch_position(Rect(300, 400, 400, 900), area, 236, 286, 230, content=contenido) is None  # muy angosta
     screen = Rect(0, 0, 1920, 1080)
     x, y = taskbar_position(area, screen, 236, 278, prefer_x=5000)
     assert y + 278 == 1040 and x == 1920 - 236     # sobre la barra de tareas y dentro de la pantalla

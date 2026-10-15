@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon,
 
 from . import lugares
 from .client import Backend
-from .drawing import (ESCALAS, GATO_H, GATO_RECT, GATO_W, GLOBO_H, GLOBO_W, PLATO_RECT, SUELO, bubble_rect,
+from .drawing import (ESCALAS, GATO_H, GATO_RECT, GATO_W, GLOBO_H, GLOBO_W, PLATO_RECT, SUELO, VENTANA_X, bubble_rect,
                       paint_bubble, paint_cat, tray_pixmap)
 from .logic import PetBrain, clamp_to_area
 from .sound import SoundPlayer
@@ -224,17 +224,41 @@ class PetController:
         avail, geo = screen.availableGeometry(), screen.geometry()
         area = lugares.Rect(avail.left(), avail.top(), avail.right() + 1, avail.bottom() + 1)
         if lugar == "ventanas":
-            dpr = screen.devicePixelRatio() or 1.0
-            ground = w.ground_px("ventana")
-            for r in lugares.candidate_windows():
-                rect = lugares.Rect(int(r.left / dpr), int(r.top / dpr), int(r.right / dpr), int(r.bottom / dpr))
-                pos = lugares.perch_position(rect, area, w.width(), w.height(), ground, prefer_x=self.home.x())
+            r = lugares.active_window()
+            if r is not None:
+                rect, target_screen = self._to_logical(r)
+                ta = target_screen.availableGeometry()
+                t_area = lugares.Rect(ta.left(), ta.top(), ta.right() + 1, ta.bottom() + 1)
+                contenido = (int(w.cat_x0 + VENTANA_X[0] * w.escala), int(w.cat_x0 + VENTANA_X[1] * w.escala))
+                pos = lugares.perch_position(rect, t_area, w.width(), w.height(), w.ground_px("ventana"),
+                                             prefer_x=self.home.x(), content=contenido)
                 if pos is not None:
                     return "ventana", QPoint(*pos)
-            # sin ventanas con lugar arriba: sobre la barra de tareas
+            # la ventana activa no deja lugar arriba (p. ej. maximizada): sobre la barra de tareas
         full = lugares.Rect(geo.left(), geo.top(), geo.right() + 1, geo.bottom() + 1)
         x, y = lugares.taskbar_position(area, full, w.width(), w.ground_px("panza"), prefer_x=self.home.x())
         return "panza", QPoint(x, y)
+
+    @staticmethod
+    def _to_logical(r: "lugares.Rect"):
+        """Píxeles físicos de Windows -> coordenadas de Qt.
+
+        Qt mantiene la esquina de cada monitor en píxeles físicos y escala desde ahí:
+        lógico = origen + (físico - origen) / escala.
+        """
+        cx, cy = (r.left + r.right) / 2, (r.top + r.bottom) / 2
+        elegida = QGuiApplication.primaryScreen()
+        for s in QGuiApplication.screens():
+            g, d = s.geometry(), s.devicePixelRatio() or 1.0
+            if g.x() <= cx < g.x() + g.width() * d and g.y() <= cy < g.y() + g.height() * d:
+                elegida = s
+                break
+        g, d = elegida.geometry(), elegida.devicePixelRatio() or 1.0
+        ox, oy = g.x(), g.y()
+
+        def conv(v, o):
+            return int(round(o + (v - o) / d))
+        return lugares.Rect(conv(r.left, ox), conv(r.top, oy), conv(r.right, ox), conv(r.bottom, oy)), elegida
 
     def _update_sleep_place(self, t: float) -> None:
         quiere = self.brain.quiere_dormir(t) and self.window.isVisible() and self._press_free()
