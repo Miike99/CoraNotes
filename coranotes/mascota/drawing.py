@@ -512,16 +512,48 @@ def pose_ventana(p, pal, v: Visual, t: float):
     p.restore()
 
 
+def draw_paw_pads(p, pal, cx, cy, r, angle=0.0):
+    """Patita vista desde abajo: blanca, con almohadilla y tres deditos rosados."""
+    p.save()
+    p.translate(cx, cy)
+    p.rotate(angle)
+    paw = QPainterPath()
+    paw.addEllipse(QPointF(0, 0), r, r * 0.88)
+    fill_outline(p, paw, white_brush(pal, 0, 0, r), pal, 1.7)
+    p.setPen(Qt.PenStyle.NoPen)
+    p.setBrush(pal.c(QColor("#F3A9AE")))
+    p.drawEllipse(QPointF(0, r * 0.22), r * 0.42, r * 0.32)        # almohadilla
+    for dx in (-0.42, 0.0, 0.42):                                   # deditos
+        p.drawEllipse(QPointF(dx * r, -r * 0.36 + abs(dx) * r * 0.25), r * 0.17, r * 0.19)
+    p.restore()
+
+
+def bent_leg(p, pal, base, knee, foot, w0, w1, n=10):
+    """Pata doblada (base -> rodilla -> pie) dibujada como un tubo suave."""
+    pts = bezier(base, knee, knee, foot, n)
+    widths = [w0 + (w1 - w0) * i / n for i in range(n + 1)]
+    path = tube(pts, widths)
+    fill_outline(p, path, fur_brush(pal, base[0], base[1], foot[0], foot[1]), pal)
+
+
 def pose_panza(p, pal, v: Visual, t: float):
     """Panza arriba sobre la barra de tareas: apoyo en y = SUELO['panza']."""
     ground = SUELO["panza"]
-    wig = math.sin(t * 3.0) * 3 if not v.reducido else 0
+    amasa = math.sin(t * 2.4) if not v.reducido else 0.0   # movimiento suave de las patitas
     draw_tail(p, pal, bezier((186, ground - 14), (214, ground - 4), (234, ground - 20), (226, ground - 46)), 17, 12)
-    # patas traseras arriba
-    for x, ang in ((160, 12), (180, 24)):
-        leg = tube([(x, ground - 30), (x + ang * 0.3, ground - 52), (x + ang * 0.5 + wig * 0.3, ground - 70)], [24, 20, 17])
-        fill_outline(p, leg, fur_brush(pal, x, ground - 70, x + 20, ground - 30), pal)
-        draw_paw(p, pal, x + ang * 0.5 + wig * 0.3, ground - 74, 11, 8)
+    # patas traseras: salen de detrás del cuerpo, con la rodilla doblada hacia afuera
+    for base, knee, foot, ang in (((166, ground - 40), (176, ground - 70), (194, ground - 66), 25),
+                                  ((182, ground - 34), (204, ground - 58), (214, ground - 46), 55)):
+        foot = (foot[0] + amasa * 1.2, foot[1] - abs(amasa) * 1.0)
+        bent_leg(p, pal, base, knee, foot, 22, 16)
+        draw_paw_pads(p, pal, foot[0] + 2, foot[1] - 3, 9.5, ang + amasa * 6)
+    # patas delanteras: cortitas y recogidas sobre el pecho, dobladas en la muñeca
+    # (se dibujan antes que el cuerpo: la base queda oculta y solo asoma la parte doblada)
+    for base, knee, foot, ang in (((100, ground - 40), (97, ground - 66), (111, ground - 71), -30),
+                                  ((120, ground - 44), (121, ground - 69), (134, ground - 69), -10)):
+        foot = (foot[0] - amasa * 1.0, foot[1] + amasa * 0.8)
+        bent_leg(p, pal, base, knee, foot, 17, 14)
+        draw_paw_pads(p, pal, foot[0] + 3, foot[1] + 1, 8.5, ang - amasa * 5)
     breath = 1 + (0.025 * math.sin(t * 1.4) if not v.reducido else 0)
     p.save()
     p.translate(136, ground)
@@ -529,8 +561,8 @@ def pose_panza(p, pal, v: Visual, t: float):
     p.translate(-136, -ground)
     body = fluffy(138, ground - 28, 62, 28, tufts=((20, 160, 0.08),), n=36)
     fill_outline(p, body, fur_brush(pal, 80, ground - 60, 200, ground), pal)
-    belly = fluffy(132, ground - 36, 40, 17, tufts=((0, 360, 0.12),), n=26)
-    fill_outline(p, belly, white_brush(pal, 132, ground - 40, 38), pal, 1.6)
+    belly = fluffy(130, ground - 34, 42, 18, tufts=((0, 360, 0.14),), n=28)
+    fill_outline(p, belly, white_brush(pal, 130, ground - 38, 40), pal, outline=False)  # panza suave, sin contorno
     p.save()
     p.setClipPath(body)
     for k in range(3):
@@ -538,11 +570,6 @@ def pose_panza(p, pal, v: Visual, t: float):
         stripe(p, pal, [(x, ground - 8), (x + 4, ground - 26), (x + 2, ground - 50)], 4.2)
     p.restore()
     p.restore()
-    # patas delanteras arriba (dobladitas)
-    for x, ang in ((104, -8), (122, 6)):
-        leg = tube([(x, ground - 46), (x + ang * 0.4, ground - 66), (x + ang - wig * 0.4, ground - 78)], [20, 18, 16])
-        fill_outline(p, leg, fur_brush(pal, x, ground - 80, x + 10, ground - 46), pal)
-        draw_paw(p, pal, x + ang - wig * 0.4, ground - 82, 10.5, 7.5)
     # cabeza recostada a la izquierda, mirando hacia arriba
     p.save()
     p.translate(50, ground - 42)
